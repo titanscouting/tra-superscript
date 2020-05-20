@@ -8,7 +8,7 @@ def pull_new_tba_matches(apikey, competition, cutoff):
 	x=requests.get("https://www.thebluealliance.com/api/v3/event/"+competition+"/matches/simple", headers={"X-TBA-Auth_Key":api_key})
 	out = []
 	for i in x.json():
-		if (i["actual_time"] != None and i["actual_time"]-cutoff >= 0 and i["comp_level"] == "qm"):
+		if i["actual_time"] != None and i["actual_time"]-cutoff >= 0 and i["comp_level"] == "qm":
 			out.append({"match" : i['match_number'], "blue" : list(map(lambda x: int(x[3:]), i['alliances']['blue']['team_keys'])), "red" : list(map(lambda x: int(x[3:]), i['alliances']['red']['team_keys'])), "winner": i["winning_alliance"]})
 	return out
 
@@ -34,17 +34,6 @@ def get_team_metrics_data(apikey, competition, team_num):
 	mdata = db.team_metrics
 	return mdata.find_one({"competition" : competition, "team": team_num})
 
-def unkeyify_2l(layered_dict):
-	out = {}
-	for i in layered_dict.keys():
-		add = []
-		sortkey = []
-		for j in layered_dict[i].keys():
-			add.append([j,layered_dict[i][j]])
-		add.sort(key = lambda x: x[0])
-		out[i] = list(map(lambda x: x[1], add))
-	return out
-
 def get_match_data_formatted(apikey, competition):
 	client = pymongo.MongoClient(apikey)
 	db = client.data_scouting
@@ -54,6 +43,19 @@ def get_match_data_formatted(apikey, competition):
 	for i in x:
 		try:
 			out[int(i)] = unkeyify_2l(get_team_match_data(apikey, competition, int(i)).transpose().to_dict())
+		except:
+			pass
+	return out
+
+def get_metrics_data_formatted(apikey, competition):
+	client = pymongo.MongoClient(apikey)
+	db = client.data_scouting
+	mdata = db.teamlist
+	x=mdata.find_one({"competition":competition})
+	out = {}
+	for i in x:
+		try:
+			out[int(i)] = d.get_team_metrics_data(apikey, competition, int(i))
 		except:
 			pass
 	return out
@@ -69,6 +71,20 @@ def get_pit_data_formatted(apikey, competition):
 			out[int(i)] = get_team_pit_data(apikey, competition, int(i))
 		except:
 			pass
+	return out
+
+def get_pit_variable_data(apikey, competition):
+	client = pymongo.MongoClient(apikey)
+	db = client.data_processing
+	mdata = db.team_pit
+	out = {}
+	return mdata.find()
+
+def get_pit_variable_formatted(apikey, competition):
+	temp = get_pit_variable_data(apikey, competition)
+	out = {}
+	for i in temp:
+		out[i["variable"]] = i["data"]
 	return out
 
 def push_team_tests_data(apikey, competition, team_num, data, dbname = "data_processing", colname = "team_tests"):
@@ -100,3 +116,14 @@ def set_analysis_flags(apikey, flag, data):
 	db = client.data_processing
 	mdata = db.flags
 	return mdata.replace_one({flag:{"$exists":True}}, data, True)
+
+def unkeyify_2l(layered_dict):
+	out = {}
+	for i in layered_dict.keys():
+		add = []
+		sortkey = []
+		for j in layered_dict[i].keys():
+			add.append([j,layered_dict[i][j]])
+		add.sort(key = lambda x: x[0])
+		out[i] = list(map(lambda x: x[1], add))
+	return out
