@@ -26,7 +26,6 @@ def main():
 	global metric_enable
 	global pit_enable
 
-	global config
 	global config = su.load_config("config.json")
 
 	task = threading.Thread(name = "match", target = match)
