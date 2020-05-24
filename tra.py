@@ -27,65 +27,70 @@ def main():
 	global pit_enable
 
 	global config
-	config = su.load_config("config.json")
+	global config = su.load_config("config.json")
 
-	while(True):
+	task = threading.Thread(name = "match", target = match)
+	task.start()
+	task = threading.Thread(name = "match", target = metric)
+	task.start()
+	task = threading.Thread(name = "pit", target = pit)
+	task.start()
 
-		if match_enable == True and match == False:
+def match():
 
-			def target():
+	match = True
 
-				apikey = config["key"]["database"]
-				competition = config["competition"]
-				tests = config["statistics"]["match"]
+	apikey = config["key"]["database"]
+	competition = config["competition"]
+	tests = config["statistics"]["match"]
 
-				data = su.load_match(apikey, competition)
-				su.matchloop(apikey, competition, data, tests)
+	data = su.load_match(apikey, competition)
+	su.matchloop(apikey, competition, data, tests)
 
-				match = False
-				return
+	match = False
 
-			match = True
-			task = threading.Thread(name = "match", target=target)
-			task.start()
+	if match_enable == True and match == False:
+		
+		task = threading.Thread(name = "match", target = match)
+		task.start()
 
-		if metric_enable == True and metric == False:
-			
-			def target():
+def metric():
 
-				apikey = config["key"]["database"]
-				tbakey = config["key"]["tba"]
-				competition = config["competition"]
-				metric = config["statistics"]["metric"]
+	metric = True
 
-				timestamp = su.get_previous_time(apikey)
+	apikey = config["key"]["database"]
+	tbakey = config["key"]["tba"]
+	competition = config["competition"]
+	metric = config["statistics"]["metric"]
 
-				su.metricloop(tbakey, apikey, competition, timestamp, metric)
+	timestamp = su.get_previous_time(apikey)
 
-				metric = False
-				return
+	su.metricloop(tbakey, apikey, competition, timestamp, metric)
 
-			match = True
-			task = threading.Thread(name = "metric", target=target)
-			task.start()
+	metric = False
 
-		if pit_enable == True and pit == False:
+	if metric_enable == True and metric == False:
+		
+		task = threading.Thread(name = "match", target = metric)
+		task.start()
 
-			def target():
+def pit():
 
-				apikey = config["key"]["database"]
-				competition = config["competition"]
-				tests = config["statistics"]["pit"]
+	pit = True
 
-				data = su.load_pit(apikey, competition)
-				su.pitloop(apikey, competition, data, tests)
+	apikey = config["key"]["database"]
+	competition = config["competition"]
+	tests = config["statistics"]["pit"]
 
-				pit = False
-				return
+	data = su.load_pit(apikey, competition)
+	su.pitloop(apikey, competition, data, tests)
 
-			pit = True
-			task = threading.Thread(name = "pit", target=target)
-			task.start()
-			
+	pit = False
+
+	if pit_enable == True and pit == False:
+		
+		task = threading.Thread(name = "pit", target = pit)
+		task.start()
+
 task = threading.Thread(name = "main", target=main)
 task.start()
