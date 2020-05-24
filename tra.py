@@ -6,9 +6,9 @@ __author__ = (
 	"Arthur Lu <learthurgo@gmail.com>",
 )
 
-match = False
-metric = False
-pit = False
+match_ = False
+metric_ = False
+pit_ = False
 
 match_enable = True
 metric_enable = True
@@ -18,9 +18,9 @@ config = {}
 
 def main():
 
-	global match
-	global metric
-	global pit
+	global match_
+	global metric_
+	global pit_
 
 	global match_enable
 	global metric_enable
@@ -38,7 +38,7 @@ def main():
 
 def match():
 
-	match = True
+	match_ = True
 
 	apikey = config["key"]["database"]
 	competition = config["competition"]
@@ -47,16 +47,16 @@ def match():
 	data = su.load_match(apikey, competition)
 	su.matchloop(apikey, competition, data, tests)
 
-	match = False
+	match_ = False
 
-	if match_enable == True and match == False:
+	if match_enable == True and match_ == False:
 		
 		task = threading.Thread(name = "match", target = match)
 		task.start()
 
 def metric():
 
-	metric = True
+	metric_ = True
 
 	apikey = config["key"]["database"]
 	tbakey = config["key"]["tba"]
@@ -67,16 +67,16 @@ def metric():
 
 	su.metricloop(tbakey, apikey, competition, timestamp, metric)
 
-	metric = False
+	metric_ = False
 
-	if metric_enable == True and metric == False:
+	if metric_enable == True and metric_ == False:
 		
 		task = threading.Thread(name = "match", target = metric)
 		task.start()
 
 def pit():
 
-	pit = True
+	pit_ = True
 
 	apikey = config["key"]["database"]
 	competition = config["competition"]
@@ -85,9 +85,9 @@ def pit():
 	data = su.load_pit(apikey, competition)
 	su.pitloop(apikey, competition, data, tests)
 
-	pit = False
+	pit_ = False
 
-	if pit_enable == True and pit == False:
+	if pit_enable == True and pit_ == False:
 		
 		task = threading.Thread(name = "pit", target = pit)
 		task.start()
