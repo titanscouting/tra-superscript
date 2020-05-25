@@ -16,7 +16,7 @@ pit_enable = True
 
 config = {}
 
-def main():
+def init():
 
 	global match_
 	global metric_
@@ -28,13 +28,6 @@ def main():
 
 	global config
 	config = su.load_config("config.json")
-
-	task = threading.Thread(name = "match", target = match)
-	task.start()
-	task = threading.Thread(name = "match", target = metric)
-	task.start()
-	task = threading.Thread(name = "pit", target = pit)
-	task.start()
 
 def match():
 
@@ -92,5 +85,92 @@ def pit():
 		task = threading.Thread(name = "pit", target = pit)
 		task.start()
 
-task = threading.Thread(name = "main", target=main)
-task.start()
+def start_match():
+	task = threading.Thread(name = "match", target = match)
+	task.start()
+
+def start_metric():
+	task = threading.Thread(name = "match", target = metric)
+	task.start()
+
+def start_pit():
+	task = threading.Thread(name = "pit", target = pit)
+	task.start()
+
+def stop_match():
+	match_enable = False
+
+def stop_metric():
+	metric_enable = False
+
+def stop_pit():
+	pit_enable = False
+
+def main():
+
+	init()
+	start_match()
+	start_metric()
+	start_pit()
+
+	exit = False
+	while(not exit):
+
+		i = input("> ")
+		cmds = i.split(" ")
+		cmds = [x for x in cmds if x != ""]
+		l = len(cmds)
+
+		if(l == 0):
+			pass
+		else:
+			if(cmds[0] == "exit"):
+				if(l == 1):
+					exit = True
+				else:
+					print("exit command expected no arguments but encountered " + str(l - 1))
+			if(cmds[0] == "status"):
+				if(l == 1):
+					print("status command expected 1 argument but encountered none\ntype status help for usage")
+				elif(l > 2):
+					print("status command expected 1 argument but encountered " + str(l - 1))
+				elif(cmds[1] == "threads"):
+					threads = threading.enumerate()
+					threads = [x.getName() for x in threads]
+					print("running threads:")
+					for thread in threads:
+						print("    " + thread)
+				elif(cmds[1] == "flags"):
+					print("current flags:")
+					print("    match running: " + match_)
+					print("    metric running: " + metric_)
+					print("    pit running: " + pit_)
+					print("    match enable: " + match_enable)
+					print("    metric enable: " + metric_enable)
+					print("    pit enable: " + pit_enable)
+				elif(cmds[1] == "config"):
+					print("current config:")
+					print(json.dumps(config))
+				elif(cmds[1] == "all"):
+					threads = threading.enumerate()
+					threads = [x.getName() for x in threads]
+					print("running threads:")
+					for thread in threads:
+						print("    " + thread)
+					print("current flags:")
+					print("    match running: " + match_)
+					print("    metric running: " + metric_)
+					print("    pit running: " + pit_)
+					print("    match enable: " + match_enable)
+					print("    metric enable: " + metric_enable)
+					print("    pit enable: " + pit_enable)
+				elif(cmds[1] == "help"):
+					
+				else:
+					threads = threading.enumerate()
+					threads = [x.getName() for x in threads]
+					if(cmds[1] in threads):
+						print(cmds[1] + " is running")
+				
+if(__name__ == "__main__"):
+	main()
