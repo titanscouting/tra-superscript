@@ -165,7 +165,7 @@ def main():
 					print("    metric enable: " + metric_enable)
 					print("    pit enable: " + pit_enable)
 				elif(cmds[1] == "help"):
-					
+					print("usage: status [arg]\nDisplays the status of the tra data analysis threads.\nArguments:\n    threads - prints the stuatus ofcurrently running threads\n    flags - prints the status of control and indicator flags\n    config - prints the current configuration information\n    all - prints all statuses\n    <name_of_thread> - prints the status of a specific thread")
 				else:
 					threads = threading.enumerate()
 					threads = [x.getName() for x in threads]
