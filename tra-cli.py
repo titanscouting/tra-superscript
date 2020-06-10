@@ -1,9 +1,12 @@
 import argparse
 from tasks import Tasker
+import test
+import threading
+from multiprocessing import Process, Queue
 
 t = Tasker()
 
-task_map = {"match":None, "metric":None, "pit":None}
+task_map = {"match":None, "metric":None, "pit":None, "test":None}
 status_map = {"match":None, "metric":None, "pit":None}
 status_map.update(task_map)
 
@@ -23,3 +26,8 @@ parser_status.add_argument("targets", metavar = "T", nargs = "*", choices = stat
 parser_status.set_defaults(which = "status")
 
 args = parser.parse_args()
+
+if(args.which == "start" and "test" in args.targets):
+	a = test.testcls()
+	tmain = Process(name = "main", target = a.main)
+	tmain.start()
