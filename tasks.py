@@ -18,62 +18,62 @@ class Tasker():
 
 	config = {}
 
-	def __init__():
+	def __init__(self):
 
-		config = su.load_config("config.json")
+		self.config = su.load_config("config.json")
 
-	def match():
+	def match(self):
 
-		match_ = True
+		self.match_ = True
 
-		apikey = config["key"]["database"]
-		competition = config["competition"]
-		tests = config["statistics"]["match"]
+		apikey = self.config["key"]["database"]
+		competition = self.config["competition"]
+		tests = self.config["statistics"]["match"]
 
 		data = su.load_match(apikey, competition)
 		su.matchloop(apikey, competition, data, tests)
 
-		match_ = False
+		self.match_ = False
 
-		if match_enable == True and match_ == False:
+		if self.match_enable == True and self.match_ == False:
 			
 			task = threading.Thread(name = "match", target = match)
 			task.start()
 
 	def metric():
 
-		metric_ = True
+		self.metric_ = True
 
-		apikey = config["key"]["database"]
-		tbakey = config["key"]["tba"]
-		competition = config["competition"]
-		metric = config["statistics"]["metric"]
+		apikey = self.config["key"]["database"]
+		tbakey = self.config["key"]["tba"]
+		competition = self.config["competition"]
+		metric = self.config["statistics"]["metric"]
 
 		timestamp = su.get_previous_time(apikey)
 
 		su.metricloop(tbakey, apikey, competition, timestamp, metric)
 
-		metric_ = False
+		self.metric_ = False
 
-		if metric_enable == True and metric_ == False:
+		if self.metric_enable == True and self.metric_ == False:
 			
 			task = threading.Thread(name = "match", target = metric)
 			task.start()
 
 	def pit():
 
-		pit_ = True
+		self.pit_ = True
 
-		apikey = config["key"]["database"]
-		competition = config["competition"]
-		tests = config["statistics"]["pit"]
+		apikey = self.config["key"]["database"]
+		competition = self.config["competition"]
+		tests = self.config["statistics"]["pit"]
 
 		data = su.load_pit(apikey, competition)
 		su.pitloop(apikey, competition, data, tests)
 
-		pit_ = False
+		self.pit_ = False
 
-		if pit_enable == True and pit_ == False:
+		if self.pit_enable == True and self.pit_ == False:
 			
 			task = threading.Thread(name = "pit", target = pit)
 			task.start()
@@ -91,31 +91,31 @@ class Tasker():
 		task.start()
 
 	def stop_match():
-		match_enable = False
+		self.match_enable = False
 
 	def stop_metric():
-		metric_enable = False
+		self.metric_enable = False
 
 	def stop_pit():
-		pit_enable = False
+		self.pit_enable = False
 
 	def get_match():
-		return match_
+		return self.match_
 
 	def get_metric():
-		return metric_
+		return self.metric_
 
 	def get_pit():
-		return pit_
+		return self.pit_
 
 	def get_match_enable():
-		return match_enable
+		return self.match_enable
 
 	def get_metric_enable():
-		return metric_enable
+		return self.metric_enable
 
 	def get_pit_enable():
-		return pit_enable
+		return self.pit_enable
 """
 def main():
 
