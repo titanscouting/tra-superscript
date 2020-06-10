@@ -105,7 +105,7 @@ def stop_metric():
 
 def stop_pit():
 	pit_enable = False
-
+"""
 def main():
 
 	init()
@@ -174,3 +174,4 @@ def main():
 				
 if(__name__ == "__main__"):
 	main()
+"""
