@@ -3,17 +3,17 @@
 # Notes:
 # setup:
 
-__version__ = "0.0.6.002"
+__version__ = "0.6.2"
 
 # changelog should be viewed using print(analysis.__changelog__)
 __changelog__ = """changelog:
-	0.0.6.002:
+	0.6.2:
 		- integrated get_team_rankings.py as get_team_metrics() function
 		- integrated visualize_pit.py as graph_pit_histogram() function
-	0.0.6.001:
+	0.6.1:
 		- bug fixes with analysis.Metric() calls
 		- modified metric functions to use config.json defined default values
-	0.0.6.000:
+	0.6.0:
 		- removed main function
 		- changed load_config function
 		- added save_config function
@@ -24,66 +24,66 @@ __changelog__ = """changelog:
 		- renamed metricsloop to metricloop
 		- split push to database functions amon push_match, push_metric, push_pit
 		- moved
-	0.0.5.002:
+	0.5.2:
 		- made changes due to refactoring of analysis
-	0.0.5.001:
+	0.5.1:
 		- text fixes
 		- removed matplotlib requirement
-	0.0.5.000:
+	0.5.0:
 		- improved user interface
-	0.0.4.002:
+	0.4.2:
 		- removed unessasary code
-	0.0.4.001:
+	0.4.1:
 		- fixed bug where X range for regression was determined before sanitization
 		- better sanitized data
-	0.0.4.000:
+	0.4.0:
 		- fixed spelling issue in __changelog__
 		- addressed nan bug in regression
 		- fixed errors on line 335 with metrics calling incorrect key "glicko2"
 		- fixed errors in metrics computing 
-	0.0.3.000:
+	0.3.0:
 		- added analysis to pit data
-	0.0.2.001:
+	0.2.1:
 		- minor stability patches
 		- implemented db syncing for timestamps
 		- fixed bugs
-	0.0.2.000:
+	0.2.0:
 		- finalized testing and small fixes
-	0.0.1.004:
+	0.1.4:
 		- finished metrics implement, trueskill is bugged
-	0.0.1.003:
+	0.1.3:
 		- working
-	0.0.1.002:
+	0.1.2:
 		- started implement of metrics
-	0.0.1.001:
+	0.1.1:
 		- cleaned up imports
-	0.0.1.000:
+	0.1.0:
 		- tested working, can push to database
-	0.0.0.009:
+	0.0.9:
 		- tested working
 		- prints out stats for the time being, will push to database later
-	0.0.0.008:
+	0.0.8:
 		- added data import
 		- removed tba import
 		- finished main method
-	0.0.0.007:
+	0.0.7:
 		- added load_config
 		- optimized simpleloop for readibility
 		- added __all__ entries
 		- added simplestats engine
 		- pending testing
-	0.0.0.006:
+	0.0.6:
 		- fixes
-	0.0.0.005:
+	0.0.5:
 		- imported pickle
 		- created custom database object
-	0.0.0.004:
+	0.0.4:
 		- fixed simpleloop to actually return a vector
-	0.0.0.003:
+	0.0.3:
 		- added metricsloop which is unfinished
-	0.0.0.002:
+	0.0.2:
 		- added simpleloop which is untested until data is provided
-	0.0.0.001:
+	0.0.1:
 		- created script
 		- added analysis, numba, numpy imports
 """
