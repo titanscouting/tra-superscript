@@ -1,5 +1,5 @@
 # Titan Robotics Team 2022: Superscript Script
-# Written by Arthur Lu & Jacob Levine
+# Written by Arthur Lu, Jacob Levine, and Dev Singh
 # Notes:
 # setup:
 
@@ -7,6 +7,8 @@ __version__ = "0.0.6.002"
 
 # changelog should be viewed using print(analysis.__changelog__)
 __changelog__ = """changelog:
+	0.0.6.003:
+		- rename analysis imports to tra_analysis for PyPI publishing
 	0.0.6.002:
 		- integrated get_team_rankings.py as get_team_metrics() function
 		- integrated visualize_pit.py as graph_pit_histogram() function
@@ -110,7 +112,7 @@ __all__ = [
 
 # imports:
 
-from analysis import analysis as an
+from tra_analysis import analysis as an
 import data as d
 import json
 import numpy as np
