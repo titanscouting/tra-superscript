@@ -86,7 +86,7 @@ __all__ = [
 
 # imports:
 
-from analysis import analysis as an
+from tra_analysis import analysis as an
 import data as d
 import numpy as np
 from os import system, name
