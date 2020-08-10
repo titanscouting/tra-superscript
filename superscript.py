@@ -1,5 +1,5 @@
 # Titan Robotics Team 2022: Superscript Script
-# Written by Arthur Lu & Jacob Levine
+# Written by Arthur Lu, Jacob Levine, and Dev Singh
 # Notes:
 # setup:
 
@@ -110,7 +110,7 @@ __all__ = [
 
 # imports:
 
-from analysis import analysis as an
+from tra_analysis import analysis as an
 import data as d
 import json
 import numpy as np
