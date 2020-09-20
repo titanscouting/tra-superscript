@@ -3,10 +3,12 @@
 # Notes:
 # setup:
 
-__version__ = "0.6.2"
+__version__ = "0.7.0"
 
 # changelog should be viewed using print(analysis.__changelog__)
 __changelog__ = """changelog:
+	0.7.0:
+		- finished implementing main function
 	0.6.2:
 		- integrated get_team_rankings.py as get_team_metrics() function
 		- integrated visualize_pit.py as graph_pit_histogram() function
@@ -120,6 +122,65 @@ import matplotlib.pyplot as plt
 import time
 import warnings
 
+def main():
+
+	warnings.filterwarnings("ignore")
+
+	while (True):
+
+		current_time = time.time()
+		print("[OK] time: " + str(current_time))
+
+		config = load_config("config.json")
+		competition = config["competition"]
+		match_tests = config["statistics"]["match"]
+		pit_tests = config["statistics"]["pit"]
+		metrics_tests = config["statistics"]["metric"]
+		print("[OK] configs loaded")
+
+		apikey = config["key"]["database"]
+		tbakey = config["key"]["tba"]
+		print("[OK] loaded keys")
+
+		previous_time = get_previous_time(apikey)
+		print("[OK] analysis backtimed to: " + str(previous_time))
+
+		print("[OK] loading data")
+		start = time.time()
+		match_data = load_match(apikey, competition)
+		pit_data = load_pit(apikey, competition)
+		print("[OK] loaded data in " + str(time.time() - start) + " seconds")
+
+		print("[OK] running tests")
+		start = time.time()
+		matchloop(apikey, competition, match_data, match_tests)
+		print("[OK] finished tests in " + str(time.time() - start) + " seconds")
+
+		print("[OK] running metrics")
+		start = time.time()
+		metricloop(tbakey, apikey, competition, previous_time, metrics_tests)
+		print("[OK] finished metrics in " + str(time.time() - start) + " seconds")
+
+		print("[OK] running pit analysis")
+		start = time.time()
+		pitloop(apikey, competition, pit_data, pit_tests)
+		print("[OK] finished pit analysis in " + str(time.time() - start) + " seconds")
+		
+		set_current_time(apikey, current_time)
+		print("[OK] finished all tests, looping")
+
+		clear()
+
+def clear(): 
+	
+	# for windows 
+	if name == 'nt': 
+		_ = system('cls') 
+  
+	# for mac and linux(here, os.name is 'posix') 
+	else: 
+		_ = system('clear')
+
 def load_config(file):
 
 	config_vector = {}
@@ -147,6 +208,10 @@ def get_previous_time(apikey):
 		previous_time = previous_time["latest_update"]
 
 	return previous_time
+
+def set_current_time(apikey, current_time):
+
+	d.set_analysis_flags(apikey, "latest_update", {"latest_update":current_time})
 
 def load_match(apikey, competition):
 
@@ -403,3 +468,5 @@ def graph_pit_histogram(apikey, competition, figsize=(80,15)):
 		i+=1
 
 	plt.show()
+
+main()
