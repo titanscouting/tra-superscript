@@ -3,10 +3,12 @@
 # Notes:
 # setup:
 
-__version__ = "0.8.0"
+__version__ = "0.8.1"
 
 # changelog should be viewed using print(analysis.__changelog__)
 __changelog__ = """changelog:
+	0.8.1:
+		- optimized matchloop further by bypassing GIL
 	0.8.0:
 		- added multithreading to matchloop
 		- tweaked user log
@@ -122,6 +124,7 @@ import json
 import numpy as np
 from os import system, name
 from pathlib import Path
+from multiprocessing import Pool
 import matplotlib.pyplot as plt
 from concurrent.futures import ThreadPoolExecutor
 import time
@@ -148,7 +151,7 @@ def main():
 	print("[OK] configs loaded")
 
 	print("[OK] starting threads")
-	exec_threads = ThreadPoolExecutor(max_workers = config["max-threads"])
+	exec_threads = Pool(processes = config["max-threads"])
 	print("[OK] threads started")
 
 	apikey = config["key"]["database"]
@@ -230,38 +233,38 @@ def load_match(apikey, competition):
 
 	return d.get_match_data_formatted(apikey, competition)
 
+def simplestats(data_test):
+
+	data = np.array(data_test[0])
+	data = data[np.isfinite(data)]
+	ranges = list(range(len(data)))
+
+	test = data_test[1]
+
+	if test == "basic_stats":
+		return an.basic_stats(data)
+
+	if test == "historical_analysis":
+		return an.histo_analysis([ranges, data])
+
+	if test == "regression_linear":
+		return an.regression(ranges, data, ['lin'])
+
+	if test == "regression_logarithmic":
+		return an.regression(ranges, data, ['log'])
+
+	if test == "regression_exponential":
+		return an.regression(ranges, data, ['exp'])
+
+	if test == "regression_polynomial":
+		return an.regression(ranges, data, ['ply'])
+
+	if test == "regression_sigmoidal":
+		return an.regression(ranges, data, ['sig'])
+
 def matchloop(apikey, competition, data, tests): # expects 3D array with [Team][Variable][Match]
 
 	global exec_threads
-
-	def simplestats(data_test):
-
-		data = np.array(data_test[0])
-		data = data[np.isfinite(data)]
-		ranges = list(range(len(data)))
-
-		test = data_test[1]
-
-		if test == "basic_stats":
-			return an.basic_stats(data)
-
-		if test == "historical_analysis":
-			return an.histo_analysis([ranges, data])
-
-		if test == "regression_linear":
-			return an.regression(ranges, data, ['lin'])
-
-		if test == "regression_logarithmic":
-			return an.regression(ranges, data, ['log'])
-
-		if test == "regression_exponential":
-			return an.regression(ranges, data, ['exp'])
-
-		if test == "regression_polynomial":
-			return an.regression(ranges, data, ['ply'])
-
-		if test == "regression_sigmoidal":
-			return an.regression(ranges, data, ['sig'])
 
 	class AutoVivification(dict):
 		def __getitem__(self, item):
