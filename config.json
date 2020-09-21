@@ -1,4 +1,5 @@
 {
+	"max-threads": 8,
 	"team": "",
 	"competition": "2020ilch",
 	"key":{

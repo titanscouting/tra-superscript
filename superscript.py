@@ -232,8 +232,6 @@ def load_match(apikey, competition):
 
 def matchloop(apikey, competition, data, tests): # expects 3D array with [Team][Variable][Match]
 
-	start = time.time()
-
 	global exec_threads
 
 	def simplestats(data_test):
@@ -304,8 +302,6 @@ def matchloop(apikey, competition, data, tests): # expects 3D array with [Team][
 
 		return_vector[team_filtered[i]][variable_filtered[i]][test_filtered[i]] = result
 		i += 1
-
-	print("metrics finished in " + str(time.time() - start))
 
 	push_match(apikey, competition, return_vector)
 
