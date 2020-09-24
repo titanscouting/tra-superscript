@@ -2,3 +2,4 @@ requests
 pymongo
 pandas
 dnspython
+tra-analysis
