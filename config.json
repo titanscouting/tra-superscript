@@ -1,7 +1,7 @@
 {
-	"max-threads": 1,
+	"max-threads": 0.5,
 	"team": "",
-	"competition": "2020ilch",
+	"competition": "",
 	"key":{
 		"database":"",
 		"tba":""
