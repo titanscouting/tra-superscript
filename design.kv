@@ -1,135 +1,135 @@
 BoxLayout:
-    orientation: "vertical"
-    
-    NavigationLayout:
-        ScreenManager:
-            id: screen_manager
-            HomeScreen:
-                name: "Home"
-                BoxLayout:
-                    orientation: "vertical"
-                    MDToolbar:
-                        title: screen_manager.current
-                        elevation: 10
-                        left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
+	orientation: "vertical"
+	
+	NavigationLayout:
+		ScreenManager:
+			id: screen_manager
+			HomeScreen:
+				name: "Home"
+				BoxLayout:
+					orientation: "vertical"
+					MDToolbar:
+						title: screen_manager.current
+						elevation: 10
+						left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
 
-                    GridLayout:
-                        cols: 1
-                        padding: 15, 15
-                        spacing: 20, 20
-                        MDTextFieldRect:
-                            hint_text: "Console Log"
-                            # size_hint: .8, None
-                            # align: 'center'
-                    # Widget:
-            SettingsScreen:
-                name: "Settings"
-                BoxLayout:
-                    orientation: 'vertical' 
-                    MDToolbar:
-                        title: screen_manager.current
-                        elevation: 10
-                        left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
-                    Widget:
-            InfoScreen:
-                name: "Info"
-                BoxLayout:
-                    orientation: 'vertical' 
-                    MDToolbar:
-                        title: screen_manager.current
-                        elevation: 10
-                        left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
-                    # GridLayout:
-                    #     cols: 2
-                    #     padding: 15, 15
-                    #     spacing: 20, 20
-                    BoxLayout:
-                        orientation: "horizontal"
-                        MDLabel:
-                            text: "DB Key:"
-                            halign: 'center'
-                        MDTextField:
-                            hint_text: "placeholder"
-                            pos_hint: {"center_y": .5}
-                    BoxLayout:
-                        orientation: "horizontal"
-                        MDLabel:
-                            text: "TBA Key:"
-                            halign: 'center'
-                        MDTextField:
-                            hint_text: "placeholder"
-                            pos_hint: {"center_y": .5}
-                    BoxLayout:
-                        orientation: "horizontal"
-                        MDLabel:
-                            text: "CPU Use:"
-                            halign: 'center'
-                        MDLabel:
-                            text: "placeholder"
-                            halign: 'center'
-                    BoxLayout:
-                        orientation: "horizontal"
-                        MDLabel:
-                            text: "Network:"
-                            halign: 'center'
-                        MDLabel:
-                            text: "placeholder"
-                            halign: 'center'
-                    Widget:
-                    BoxLayout:
-                        orientation: "horizontal"
-                        MDLabel:
-                            text: "Progress"
-                            halign: 'center'
-                        MDProgressBar:
-                            id: progress
-                            value: 50
-                        
-                            
-                    
-        MDNavigationDrawer:
-            id: nav_drawer
-            BoxLayout:
-                orientation: "vertical"
-                padding: "8dp"
-                spacing: "8dp"
-                MDLabel:
-                    text: "Titan Scouting"
-                    font_style: "Button"
-                    size_hint_y: None
-                    height: self.texture_size[1]
+					GridLayout:
+						cols: 1
+						padding: 15, 15
+						spacing: 20, 20
+						MDTextFieldRect:
+							hint_text: "Console Log"
+							# size_hint: .8, None
+							# align: 'center'
+					# Widget:
+			SettingsScreen:
+				name: "Settings"
+				BoxLayout:
+					orientation: 'vertical' 
+					MDToolbar:
+						title: screen_manager.current
+						elevation: 10
+						left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
+					Widget:
+			InfoScreen:
+				name: "Info"
+				BoxLayout:
+					orientation: 'vertical' 
+					MDToolbar:
+						title: screen_manager.current
+						elevation: 10
+						left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
+					# GridLayout:
+					#     cols: 2
+					#     padding: 15, 15
+					#     spacing: 20, 20
+					BoxLayout:
+						orientation: "horizontal"
+						MDLabel:
+							text: "DB Key:"
+							halign: 'center'
+						MDTextField:
+							hint_text: "placeholder"
+							pos_hint: {"center_y": .5}
+					BoxLayout:
+						orientation: "horizontal"
+						MDLabel:
+							text: "TBA Key:"
+							halign: 'center'
+						MDTextField:
+							hint_text: "placeholder"
+							pos_hint: {"center_y": .5}
+					BoxLayout:
+						orientation: "horizontal"
+						MDLabel:
+							text: "CPU Use:"
+							halign: 'center'
+						MDLabel:
+							text: "placeholder"
+							halign: 'center'
+					BoxLayout:
+						orientation: "horizontal"
+						MDLabel:
+							text: "Network:"
+							halign: 'center'
+						MDLabel:
+							text: "placeholder"
+							halign: 'center'
+					Widget:
+					BoxLayout:
+						orientation: "horizontal"
+						MDLabel:
+							text: "Progress"
+							halign: 'center'
+						MDProgressBar:
+							id: progress
+							value: 50
+						
+							
+					
+		MDNavigationDrawer:
+			id: nav_drawer
+			BoxLayout:
+				orientation: "vertical"
+				padding: "8dp"
+				spacing: "8dp"
+				MDLabel:
+					text: "Titan Scouting"
+					font_style: "Button"
+					size_hint_y: None
+					height: self.texture_size[1]
 
-                MDLabel:
-                    text: "Data Analysis"
-                    font_style: "Caption"
-                    size_hint_y: None
-                    height: self.texture_size[1]
-                ScrollView:
-                    MDList:
-                        OneLineAvatarListItem:
-                            text: "Home"
-                            on_press:
-                                # nav_drawer.set_state("close")
-                                # screen_manager.transition.direction = "left"
-                                screen_manager.current = "Home"
-                            IconLeftWidget:
-                                icon: "home"
-                            
-                        OneLineAvatarListItem:
-                            text: "Settings"
-                            on_press:
-                                # nav_drawer.set_state("close")
-                                # screen_manager.transition.direction = "right"
-                                # screen_manager.fade
-                                screen_manager.current = "Settings"
-                            IconLeftWidget:
-                                icon: "cog"
-                        OneLineAvatarListItem:
-                            text: "Info"
-                            on_press:
-                                # nav_drawer.set_state("close")
-                                # screen_manager.transition.direction = "right"
-                                # screen_manager.fade
-                                screen_manager.current = "Info"
-                            IconLeftWidget:
-                                icon: "cog"
+				MDLabel:
+					text: "Data Analysis"
+					font_style: "Caption"
+					size_hint_y: None
+					height: self.texture_size[1]
+				ScrollView:
+					MDList:
+						OneLineAvatarListItem:
+							text: "Home"
+							on_press:
+								# nav_drawer.set_state("close")
+								# screen_manager.transition.direction = "left"
+								screen_manager.current = "Home"
+							IconLeftWidget:
+								icon: "home"
+							
+						OneLineAvatarListItem:
+							text: "Settings"
+							on_press:
+								# nav_drawer.set_state("close")
+								# screen_manager.transition.direction = "right"
+								# screen_manager.fade
+								screen_manager.current = "Settings"
+							IconLeftWidget:
+								icon: "cog"
+						OneLineAvatarListItem:
+							text: "Info"
+							on_press:
+								# nav_drawer.set_state("close")
+								# screen_manager.transition.direction = "right"
+								# screen_manager.fade
+								screen_manager.current = "Info"
+							IconLeftWidget:
+								icon: "cog"

@@ -5,18 +5,18 @@ from kivymd.app import MDApp
 # import superscript as ss
 
 class HomeScreen(Screen):
-    pass
+	pass
 class SettingsScreen(Screen):
-    pass
+	pass
 class InfoScreen(Screen):
-    pass
+	pass
 
 class MyApp(MDApp):
-    def build(self):
-        self.theme_cls.primary_palette = "Red"
-        return Builder.load_file("design.kv")
+	def build(self):
+		self.theme_cls.primary_palette = "Red"
+		return Builder.load_file("design.kv")
 
 
 
 if __name__ == "__main__":
-    MyApp().run()
+	MyApp().run()
