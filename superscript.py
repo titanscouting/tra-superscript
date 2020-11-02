@@ -148,7 +148,7 @@ def main():
 		current_time = time.time()
 		print("[OK] time: " + str(current_time))
 
-		config = load_config("config.json")
+		config = load_config("data-analysis/config.json")
 		competition = config["competition"]
 		match_tests = config["statistics"]["match"]
 		pit_tests = config["statistics"]["pit"]
