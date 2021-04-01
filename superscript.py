@@ -135,75 +135,75 @@ from concurrent.futures import ThreadPoolExecutor
 import time
 import warnings
 
-global exec_threads
+# global exec_threads
 
 def main():
 
-	global exec_threads
+	# global exec_threads
 
 	warnings.filterwarnings("ignore")
 
-	while (True):
+# while (True):
 
-		current_time = time.time()
-		print("[OK] time: " + str(current_time))
+	current_time = time.time()
+	print("[OK] time: " + str(current_time))
 
-		config = load_config("data-analysis/config.json")
-		competition = config["competition"]
-		match_tests = config["statistics"]["match"]
-		pit_tests = config["statistics"]["pit"]
-		metrics_tests = config["statistics"]["metric"]
-		print("[OK] configs loaded")
+	config = load_config("red-alliance-analysis\data-analysis\config.json")
+	competition = config["competition"]
+	match_tests = config["statistics"]["match"]
+	pit_tests = config["statistics"]["pit"]
+	metrics_tests = config["statistics"]["metric"]
+	print("[OK] configs loaded")
 
-		print("[OK] starting threads")
-		cfg_max_threads = config["max-threads"]
-		sys_max_threads = os.cpu_count()
-		if cfg_max_threads > -sys_max_threads and cfg_max_threads < 0 :
-			alloc_processes = sys_max_threads + cfg_max_threads
-		elif cfg_max_threads > 0 and cfg_max_threads < 1:
-			alloc_processes = math.floor(cfg_max_threads * sys_max_threads)
-		elif cfg_max_threads > 1 and cfg_max_threads <= sys_max_threads:
-			alloc_processes = cfg_max_threads
-		elif cfg_max_threads == 0:
-			alloc_processes = sys_max_threads
-		else:
-			print("[Err] Invalid number of processes, must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads))
-			exit()
-		exec_threads = Pool(processes = alloc_processes)
-		print("[OK] " + str(alloc_processes) + " threads started")
+	print("[OK] starting threads")
+	cfg_max_threads = config["max-threads"]
+	sys_max_threads = os.cpu_count()
+	if cfg_max_threads > -sys_max_threads and cfg_max_threads < 0 :
+		alloc_processes = sys_max_threads + cfg_max_threads
+	elif cfg_max_threads > 0 and cfg_max_threads < 1:
+		alloc_processes = math.floor(cfg_max_threads * sys_max_threads)
+	elif cfg_max_threads > 1 and cfg_max_threads <= sys_max_threads:
+		alloc_processes = cfg_max_threads
+	elif cfg_max_threads == 0:
+		alloc_processes = sys_max_threads
+	else:
+		print("[Err] Invalid number of processes, must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads))
+		exit()
+	# exec_threads = Pool(processes = alloc_processes)
+	# print("[OK] " + str(alloc_processes) + " threads started")
 
-		apikey = config["key"]["database"]
-		tbakey = config["key"]["tba"]
-		print("[OK] loaded keys")
+	apikey = config["key"]["database"]
+	tbakey = config["key"]["tba"]
+	print("[OK] loaded keys")
 
-		previous_time = get_previous_time(apikey)
-		print("[OK] analysis backtimed to: " + str(previous_time))
+	previous_time = get_previous_time(apikey)
+	print("[OK] analysis backtimed to: " + str(previous_time))
 
-		print("[OK] loading data")
-		start = time.time()
-		match_data = load_match(apikey, competition)
-		pit_data = load_pit(apikey, competition)
-		print("[OK] loaded data in " + str(time.time() - start) + " seconds")
+	print("[OK] loading data")
+	start = time.time()
+	match_data = load_match(apikey, competition)
+	pit_data = load_pit(apikey, competition)
+	print("[OK] loaded data in " + str(time.time() - start) + " seconds")
 
-		print("[OK] running match stats")
-		start = time.time()
-		matchloop(apikey, competition, match_data, match_tests)
-		print("[OK] finished match stats in " + str(time.time() - start) + " seconds")
+	print("[OK] running match stats")
+	start = time.time()
+	matchloop(apikey, competition, match_data, match_tests)
+	print("[OK] finished match stats in " + str(time.time() - start) + " seconds")
 
-		print("[OK] running team metrics")
-		start = time.time()
-		metricloop(tbakey, apikey, competition, previous_time, metrics_tests)
-		print("[OK] finished team metrics in " + str(time.time() - start) + " seconds")
+	print("[OK] running team metrics")
+	start = time.time()
+	metricloop(tbakey, apikey, competition, previous_time, metrics_tests)
+	print("[OK] finished team metrics in " + str(time.time() - start) + " seconds")
 
-		print("[OK] running pit analysis")
-		start = time.time()
-		pitloop(apikey, competition, pit_data, pit_tests)
-		print("[OK] finished pit analysis in " + str(time.time() - start) + " seconds")
-		
-		set_current_time(apikey, current_time)
-		print("[OK] finished all tests, looping")
+	print("[OK] running pit analysis")
+	start = time.time()
+	pitloop(apikey, competition, pit_data, pit_tests)
+	print("[OK] finished pit analysis in " + str(time.time() - start) + " seconds")
+	
+	set_current_time(apikey, current_time)
+	print("[OK] finished all tests, looping")
 
-		clear()
+	# clear()
 
 def clear(): 
 	
@@ -314,7 +314,7 @@ def matchloop(apikey, competition, data, tests): # expects 3D array with [Team][
 					variable_data.append((data[team][variable], test))
 					test_filtered.append(test)
 
-	result_filtered = exec_threads.map(simplestats, variable_data)
+	result_filtered = map(simplestats, variable_data)
 	i = 0
 
 	result_filtered = list(result_filtered)

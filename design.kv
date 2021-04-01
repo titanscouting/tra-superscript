@@ -1,4 +1,4 @@
-BoxLayout:
+<Launch>:
 	orientation: "vertical"
 	
 	NavigationLayout:
@@ -51,6 +51,7 @@ BoxLayout:
 						MDTextField:
 							hint_text: "placeholder"
 							pos_hint: {"center_y": .5}
+						
 					BoxLayout:
 						orientation: "horizontal"
 						MDLabel:
@@ -84,9 +85,15 @@ BoxLayout:
 						MDProgressBar:
 							id: progress
 							value: 50
-						
+			StatsScreen:
+				name: "Stats"
+				MDCheckbox:
+					size_hint: None, None
+					size: "48dp", "48dp"
+					pos_hint: {'center_x': .5, 'center_y': .5}
+					on_active: Screen.test()
 							
-					
+#Navigation Drawer ------------------------- 
 		MDNavigationDrawer:
 			id: nav_drawer
 			BoxLayout:
@@ -131,5 +138,14 @@ BoxLayout:
 								# screen_manager.transition.direction = "right"
 								# screen_manager.fade
 								screen_manager.current = "Info"
+							IconLeftWidget:
+								icon: "cog"
+						OneLineAvatarListItem:
+							text: "Stats"
+							on_press:
+								# nav_drawer.set_state("close")
+								# screen_manager.transition.direction = "right"
+								# screen_manager.fade
+								screen_manager.current = "Stats"
 							IconLeftWidget:
 								icon: "cog"
