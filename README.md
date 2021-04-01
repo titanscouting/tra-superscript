@@ -1,5 +1,10 @@
+# Red Alliance Analysis &middot; ![GitHub release (latest by date)](https://img.shields.io/github/v/release/titanscout2022/red-alliance-analysis)
 
-# tra-data-analysis
+Titan Robotics 2022 Strategy Team Repository for Data Analysis Tools. Included with these tools are the backend data analysis engine formatted as a python package, associated binaries for the analysis package, and premade scripts that can be pulled directly from this repository and will integrate with other Red Alliance applications to quickly deploy FRC scouting tools.
+
+---
+
+# `data-analysis`
 
 To facilitate data analysis of collected scouting data in a user firendly tool, we created the data-analysis application. At its core it uses the tra-analysis package to conduct any number of user selected tests on data collected from the TRA scouting app. It uploads these tests back to MongoDB where it can be viewed from the app at any time.  
 
@@ -32,11 +37,9 @@ To run the data-analysis application, navigate to the data-analysis folder once 
 
 `pymongo.errors.ConfigurationError: Empty host (or extra comma in host list).`
 
-Don't worry, you may have just not configured the application correctly, but would otherwise work. Refer to [the documentation](https://titanscouting.github.io/analysis/data_analysis/Config) to learn how to configure data-analysis.
+don't worry, you may have just not configured the application correctly, but would otherwise work. Refer to [the documentation](https://titanscouting.github.io/analysis/data_analysis/Config) to learn how to configure data-analysis.
 
-# Contributing
-
-Read our included contributing guidelines (`CONTRIBUTING.md`) for more information and feel free to reach out to any current maintainer for more information. 
+---
 
 # Build Statuses
 
