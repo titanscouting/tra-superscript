@@ -42,4 +42,5 @@ don't worry, you may have just not configured the application correctly, but wou
 ---
 
 # Build Statuses
-![Superscript Unit Tests](https://github.com/titanscout2022/red-alliance-analysis/workflows/Superscript%20Unit%20Tests/badge.svg?branch=master)
+
+Coming soon!
