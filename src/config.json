@@ -46,7 +46,7 @@
 			],
 			"balls-started": [
 				"basic_stats",
-				"historical_analyss",
+				"historical_analysis",
 				"regression_linear",
 				"regression_logarithmic",
 				"regression_exponential",
