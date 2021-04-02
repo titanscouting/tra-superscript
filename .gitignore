@@ -4,7 +4,5 @@
 **/.pytest_cache/
 **/*.pyc
 
-**/build/
 **/*.egg-info/
-**/dist/
 **/config.json
