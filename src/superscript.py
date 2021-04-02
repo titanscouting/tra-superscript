@@ -135,11 +135,11 @@ from concurrent.futures import ThreadPoolExecutor
 import time
 import warnings
 
-# global exec_threads
+global exec_threads
 
 def main():
 
-	# global exec_threads
+	global exec_threads
 
 	warnings.filterwarnings("ignore")
 
@@ -203,7 +203,7 @@ def main():
 		set_current_time(apikey, current_time)
 		print("[OK] finished all tests, looping")
 
-		# clear()
+		#clear()
 
 def clear(): 
 	
@@ -314,7 +314,7 @@ def matchloop(apikey, competition, data, tests): # expects 3D array with [Team][
 					variable_data.append((data[team][variable], test))
 					test_filtered.append(test)
 
-	result_filtered = map(simplestats, variable_data)
+	result_filtered = exec_threads.map(simplestats, variable_data)
 	i = 0
 
 	result_filtered = list(result_filtered)
