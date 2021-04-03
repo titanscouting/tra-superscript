@@ -3,10 +3,12 @@
 # Notes:
 # setup:
 
-__version__ = "0.8.2"
+__version__ = "0.8.3"
 
 # changelog should be viewed using print(analysis.__changelog__)
 __changelog__ = """changelog:
+	0.8.3:
+		- updated matchloop with new regression format (requires tra_analysis 3.x)
 	0.8.2:
 		- readded while true to main function
 		- added more thread config options
@@ -284,6 +286,8 @@ def matchloop(apikey, competition, data, tests): # expects 3D array with [Team][
 
 	global exec_threads
 
+	short_mapping = {"regression_linear": "lin", "regression_logarithmic": "log", "regression_exponential": "exp", "regression_polynomial": "ply", "regression_sigmoidal": "sig"}
+
 	class AutoVivification(dict):
 		def __getitem__(self, item):
 			try:
@@ -321,7 +325,13 @@ def matchloop(apikey, competition, data, tests): # expects 3D array with [Team][
 
 	for result in result_filtered:
 
-		return_vector[team_filtered[i]][variable_filtered[i]][test_filtered[i]] = result
+		filtered = test_filtered[i]
+
+		try:
+			short = short_mapping[filtered]
+			return_vector[team_filtered[i]][variable_filtered[i]][test_filtered[i]] = result[short]
+		except KeyError: # not in mapping
+			return_vector[team_filtered[i]][variable_filtered[i]][test_filtered[i]] = result
 		i += 1
 
 	push_match(apikey, competition, return_vector)
