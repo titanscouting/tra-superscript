@@ -3,10 +3,14 @@
 # Notes:
 # setup:
 
-__version__ = "0.8.3"
+__version__ = "0.8.4"
 
 # changelog should be viewed using print(analysis.__changelog__)
 __changelog__ = """changelog:
+	0.84:
+		- added better error message for missing config.json
+		- added automatic config.json creation
+		- added splash text with version and system info
 	0.8.3:
 		- updated matchloop with new regression format (requires tra_analysis 3.x)
 	0.8.2:
@@ -132,6 +136,7 @@ import os
 from os import system, name
 from pathlib import Path
 from multiprocessing import Pool
+import platform
 import matplotlib.pyplot as plt
 from concurrent.futures import ThreadPoolExecutor
 import time
@@ -144,6 +149,8 @@ def main():
 	global exec_threads
 
 	warnings.filterwarnings("ignore")
+
+	splash()
 
 	while (True):
 
@@ -169,7 +176,7 @@ def main():
 		elif cfg_max_threads == 0:
 			alloc_processes = sys_max_threads
 		else:
-			print("[Err] Invalid number of processes, must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads))
+			print("[ERROR] Invalid number of processes, must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads))
 			exit()
 		exec_threads = Pool(processes = alloc_processes)
 		print("[OK] " + str(alloc_processes) + " threads started")
@@ -205,6 +212,8 @@ def main():
 		set_current_time(apikey, current_time)
 		print("[OK] finished all tests, looping")
 
+		print_hrule()
+
 		#clear()
 
 def clear(): 
@@ -217,11 +226,39 @@ def clear():
 	else: 
 		_ = system('clear')
 
+def print_hrule():
+
+	print("#"+38*"-"+"#")
+
+def print_box(s):
+
+	temp = "|"
+	temp += s
+	temp += (40-len(s)-2)*" "
+	temp += "|"
+	print(temp)
+
+def splash():
+
+	print_hrule()
+	print_box(" superscript version: " + __version__)
+	print_box(" os: " + platform.system())
+	print_box(" python: " + platform.python_version())
+	print_hrule()
+
 def load_config(file):
 
 	config_vector = {}
-	with open(file) as f:
-		config_vector = json.load(f)
+
+	try:
+		f = open(file)
+	except:
+		print("[ERROR] could not locate config.json, generating blank config.json and exiting")
+		f = open(file, "w")
+		f.write(sample_json)
+		exit()
+	
+	config_vector = json.load(f)
 
 	return config_vector
 
@@ -542,5 +579,52 @@ def graph_pit_histogram(apikey, competition, figsize=(80,15)):
 		i+=1
 
 	plt.show()
+
+sample_json = """{
+	"max-threads": 0.5,
+	"team": "",
+	"competition": "2020ilch",
+	"key":{
+		"database":"",
+		"tba":""
+	},
+	"statistics":{
+		"match":{
+			"balls-blocked":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+			"balls-collected":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+			"balls-lower-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+			"balls-lower-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+			"balls-started":["basic_stats","historical_analyss","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+			"balls-upper-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+			"balls-upper-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"]
+
+		},
+		"metric":{
+			"elo":{
+				"score":1500,
+				"N":400,
+				"K":24
+			},
+			"gl2":{
+				"score":1500,
+				"rd":250,
+				"vol":0.06
+			},
+			"ts":{
+				"mu":25,
+				"sigma":8.33
+			}
+		},
+		"pit":{
+			"wheel-mechanism":true,
+			"low-balls":true,
+			"high-balls":true,
+			"wheel-success":true,
+			"strategic-focus":true,
+			"climb-mechanism":true,
+			"attitude":true
+		}
+	}
+}"""
 
 main()
