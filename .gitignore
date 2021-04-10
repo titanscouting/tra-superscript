@@ -7,3 +7,5 @@
 **/*.egg-info/
 **/config.json
 **/tra_analysis/
+
+**/errorlog.txt
