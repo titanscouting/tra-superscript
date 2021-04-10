@@ -3,11 +3,14 @@
 # Notes:
 # setup:
 
-__version__ = "0.8.4"
+__version__ = "0.8.5"
 
 # changelog should be viewed using print(analysis.__changelog__)
 __changelog__ = """changelog:
-	0.84:
+	0.8.5:
+		- added more gradeful KeyboardInterrupt exiting
+		- redirected stderr to errorlog.txt
+	0.8.4:
 		- added better error message for missing config.json
 		- added automatic config.json creation
 		- added splash text with version and system info
@@ -138,6 +141,7 @@ from pathlib import Path
 from multiprocessing import Pool
 import platform
 import matplotlib.pyplot as plt
+import sys
 from concurrent.futures import ThreadPoolExecutor
 import time
 import warnings
@@ -148,71 +152,84 @@ def main():
 
 	global exec_threads
 
+	sys.stderr = open("errorlog.txt", "w")
+
 	warnings.filterwarnings("ignore")
 
 	splash()
 
 	while (True):
 
-		current_time = time.time()
-		print("[OK] time: " + str(current_time))
+		try:
 
-		config = load_config("config.json")
-		competition = config["competition"]
-		match_tests = config["statistics"]["match"]
-		pit_tests = config["statistics"]["pit"]
-		metrics_tests = config["statistics"]["metric"]
-		print("[OK] configs loaded")
+			current_time = time.time()
+			print("[OK] time: " + str(current_time))
 
-		print("[OK] starting threads")
-		cfg_max_threads = config["max-threads"]
-		sys_max_threads = os.cpu_count()
-		if cfg_max_threads > -sys_max_threads and cfg_max_threads < 0 :
-			alloc_processes = sys_max_threads + cfg_max_threads
-		elif cfg_max_threads > 0 and cfg_max_threads < 1:
-			alloc_processes = math.floor(cfg_max_threads * sys_max_threads)
-		elif cfg_max_threads > 1 and cfg_max_threads <= sys_max_threads:
-			alloc_processes = cfg_max_threads
-		elif cfg_max_threads == 0:
-			alloc_processes = sys_max_threads
-		else:
-			print("[ERROR] Invalid number of processes, must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads))
-			exit()
-		exec_threads = Pool(processes = alloc_processes)
-		print("[OK] " + str(alloc_processes) + " threads started")
+			config = load_config("config.json")
+			competition = config["competition"]
+			match_tests = config["statistics"]["match"]
+			pit_tests = config["statistics"]["pit"]
+			metrics_tests = config["statistics"]["metric"]
+			print("[OK] configs loaded")
 
-		apikey = config["key"]["database"]
-		tbakey = config["key"]["tba"]
-		print("[OK] loaded keys")
+			print("[OK] starting threads")
+			cfg_max_threads = config["max-threads"]
+			sys_max_threads = os.cpu_count()
+			if cfg_max_threads > -sys_max_threads and cfg_max_threads < 0 :
+				alloc_processes = sys_max_threads + cfg_max_threads
+			elif cfg_max_threads > 0 and cfg_max_threads < 1:
+				alloc_processes = math.floor(cfg_max_threads * sys_max_threads)
+			elif cfg_max_threads > 1 and cfg_max_threads <= sys_max_threads:
+				alloc_processes = cfg_max_threads
+			elif cfg_max_threads == 0:
+				alloc_processes = sys_max_threads
+			else:
+				print("[ERROR] Invalid number of processes, must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads))
+				exit()
+			exec_threads = Pool(processes = alloc_processes)
+			print("[OK] " + str(alloc_processes) + " threads started")
 
-		previous_time = get_previous_time(apikey)
-		print("[OK] analysis backtimed to: " + str(previous_time))
+			apikey = config["key"]["database"]
+			tbakey = config["key"]["tba"]
+			print("[OK] loaded keys")
 
-		print("[OK] loading data")
-		start = time.time()
-		match_data = load_match(apikey, competition)
-		pit_data = load_pit(apikey, competition)
-		print("[OK] loaded data in " + str(time.time() - start) + " seconds")
+			previous_time = get_previous_time(apikey)
+			print("[OK] analysis backtimed to: " + str(previous_time))
 
-		print("[OK] running match stats")
-		start = time.time()
-		matchloop(apikey, competition, match_data, match_tests)
-		print("[OK] finished match stats in " + str(time.time() - start) + " seconds")
+			print("[OK] loading data")
+			start = time.time()
+			match_data = load_match(apikey, competition)
+			pit_data = load_pit(apikey, competition)
+			print("[OK] loaded data in " + str(time.time() - start) + " seconds")
 
-		print("[OK] running team metrics")
-		start = time.time()
-		metricloop(tbakey, apikey, competition, previous_time, metrics_tests)
-		print("[OK] finished team metrics in " + str(time.time() - start) + " seconds")
+			print("[OK] running match stats")
+			start = time.time()
+			matchloop(apikey, competition, match_data, match_tests)
+			print("[OK] finished match stats in " + str(time.time() - start) + " seconds")
 
-		print("[OK] running pit analysis")
-		start = time.time()
-		pitloop(apikey, competition, pit_data, pit_tests)
-		print("[OK] finished pit analysis in " + str(time.time() - start) + " seconds")
+			print("[OK] running team metrics")
+			start = time.time()
+			metricloop(tbakey, apikey, competition, previous_time, metrics_tests)
+			print("[OK] finished team metrics in " + str(time.time() - start) + " seconds")
+
+			print("[OK] running pit analysis")
+			start = time.time()
+			pitloop(apikey, competition, pit_data, pit_tests)
+			print("[OK] finished pit analysis in " + str(time.time() - start) + " seconds")
+			
+			set_current_time(apikey, current_time)
+			print("[OK] finished all tests, looping")
+
+			print_hrule()
 		
-		set_current_time(apikey, current_time)
-		print("[OK] finished all tests, looping")
+		except KeyboardInterrupt:
+			print("\n[OK] caught KeyboardInterrupt, killing processes")
+			exec_threads.terminate()
+			print("[OK] processes killed, exiting")
+			exit()
 
-		print_hrule()
+		else:
+			pass
 
 		#clear()
 
