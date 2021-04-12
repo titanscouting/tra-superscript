@@ -3,10 +3,12 @@
 # Notes:
 # setup:
 
-__version__ = "0.8.5"
+__version__ = "0.8.6"
 
 # changelog should be viewed using print(analysis.__changelog__)
 __changelog__ = """changelog:
+	0.8.6:
+		- added proper main function
 	0.8.5:
 		- added more gradeful KeyboardInterrupt exiting
 		- redirected stderr to errorlog.txt
@@ -140,7 +142,6 @@ from os import system, name
 from pathlib import Path
 from multiprocessing import Pool
 import platform
-import matplotlib.pyplot as plt
 import sys
 from concurrent.futures import ThreadPoolExecutor
 import time
@@ -574,29 +575,6 @@ def get_team_metrics(apikey, tbakey, competition):
 
 	return {"elo-ranks": elo_ranked, "glicko2-ranks": gl2_ranked}
 
-def graph_pit_histogram(apikey, competition, figsize=(80,15)):
-
-	pit = d.get_pit_variable_formatted(apikey, competition)
-
-	fig, ax = plt.subplots(1, len(pit), sharey=True, figsize=figsize)
-
-	i = 0
-
-	for variable in pit:
-
-		ax[i].hist(pit[variable])
-		ax[i].invert_xaxis()
-
-		ax[i].set_xlabel('')
-		ax[i].set_ylabel('Frequency')
-		ax[i].set_title(variable)
-
-		plt.yticks(np.arange(len(pit[variable])))
-
-		i+=1
-
-	plt.show()
-
 sample_json = """{
 	"max-threads": 0.5,
 	"team": "",
@@ -644,4 +622,7 @@ sample_json = """{
 	}
 }"""
 
-main()
+if __name__ == "__main__":
+	if sys.platform.startswith('win'):
+		multiprocessing.freeze_support()
+	main()
