@@ -143,7 +143,6 @@ from pathlib import Path
 from multiprocessing import Pool
 import platform
 import sys
-from concurrent.futures import ThreadPoolExecutor
 import time
 import warnings
 

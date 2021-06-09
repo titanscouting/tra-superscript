@@ -1,5 +1,5 @@
 pathtospec="../src/superscript.spec"
 pathtodist="../dist/"
-pathtowork="/temp/"
+pathtowork="temp/"
 
 pyinstaller --onefile --clean --distpath ${pathtodist} --workpath ${pathtowork} ${pathtospec}
