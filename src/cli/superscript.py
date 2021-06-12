@@ -3,10 +3,14 @@
 # Notes:
 # setup:
 
-__version__ = "0.8.6"
+__version__ = "0.9.0"
 
 # changelog should be viewed using print(analysis.__changelog__)
 __changelog__ = """changelog:
+	0.9.0:
+		- moved printing and logging related functions to interface.py (changelog will stay in this file)
+		- changed function return files for load_config and save_config to standard C values (0 for success, 1 for error)
+		- added local variables for config location
 	0.8.6:
 		- added proper main function
 	0.8.5:
@@ -187,7 +191,7 @@ def main():
 
 	splash(__version__)
 
-def load_config(config_vector):
+def load_config(path, config_vector):
 	try:
 		f = open(path, "r")
 	except:
