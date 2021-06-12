@@ -5,7 +5,7 @@ import platform
 
 empty_delim = " "
 hard_divided_delim = "|"
-soft_divided_delim = ":"
+soft_divided_delim = "|"
 l_brack = "["
 r_brack = "]"
 
@@ -17,7 +17,7 @@ stderr = sys.stderr
 
 def log(target, level, message, code = 0):
 
-	message = time.ctime() + empty_delim + str(level) + l_brack + str(code) + r_brack + empty_delim + soft_divided_delim + empty_delim + message
+	message = time.ctime() + empty_delim + str(level) + l_brack + f"{code:04}" + r_brack + empty_delim + soft_divided_delim + empty_delim + message
 	print(message, file = target)
 
 def clear():

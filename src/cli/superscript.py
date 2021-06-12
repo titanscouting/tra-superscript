@@ -11,6 +11,8 @@ __changelog__ = """changelog:
 		- moved printing and logging related functions to interface.py (changelog will stay in this file)
 		- changed function return files for load_config and save_config to standard C values (0 for success, 1 for error)
 		- added local variables for config location
+		- moved dataset getting and setting functions to dataset.py (changelog will stay in this file)
+		- moved matchloop, metricloop, pitloop and helper functions (simplestats) to processing.py
 	0.8.6:
 		- added proper main function
 	0.8.5:
@@ -121,23 +123,22 @@ __author__ = (
 __all__ = [
 	"load_config",
 	"save_config",
-	"get_previous_time",
-	"load_match",
-	"matchloop",
-	"load_metric",
-	"metricloop",
-	"load_pit",
-	"pitloop",
-	"push_match",
-	"push_metric",
-	"push_pit",
 ]
 
 # imports:
 
 import json
+import multiprocessing
+import os
+import math
+from multiprocessing import Pool
+import time
+import warnings
+import sys
 
-from cli_interface import splash, log, ERR, INF, stdout, stderr
+from interface import splash, log, ERR, INF, stdout, stderr
+from dataset import get_previous_time, set_current_time, load_match, push_match, load_metric, push_metric, load_pit, push_pit
+from processing import matchloop, metricloop, pitloop
 
 config_path = "config.json"
 sample_json = """{
@@ -189,21 +190,190 @@ sample_json = """{
 
 def main():
 
+	warnings.filterwarnings("ignore")
+	sys.stderr = open("errorlog.txt", "w")
+
 	splash(__version__)
+
+	loop_exit_code = 0
+	loop_stored_exception = None
+
+	while True:
+
+		try:
+
+			loop_start = time.time()
+
+			current_time = time.time()
+			log(stdout, INF, "current time: " + str(current_time))
+
+			config = {}
+			if load_config(config_path, config) == 1:
+				exit(1)
+
+			error_flag = False
+
+			try:
+				competition = config["competition"]
+			except:
+				log(stderr, ERR, "could not find competition field in config", code = 101)
+				error_flag = True
+			try:
+				match_tests = config["statistics"]["match"]
+			except:
+				log(stderr, ERR, "could not find match_tests field in config", code = 102)
+				error_flag = True
+			try:
+				metrics_tests = config["statistics"]["metric"]
+			except:
+				log(stderr, ERR, "could not find metrics_tests field in config", code = 103)
+				error_flag = True
+			try:
+				pit_tests = config["statistics"]["pit"]
+			except:
+				log(stderr, ERR, "could not find pit_tests field in config", code = 104)
+				error_flag = True
+			
+			if error_flag:
+				exit(1)
+			error_flag = False
+
+			if competition == None or competition == "":
+				log(stderr, ERR, "competition field in config must not be empty", code = 105)
+				error_flag = True
+			if match_tests == None:
+				log(stderr, ERR, "match_tests field in config must not be empty", code = 106)
+				error_flag = True
+			if metrics_tests == None:
+				log(stderr, ERR, "metrics_tests field in config must not be empty", code = 107)
+				error_flag = True
+			if pit_tests == None:
+				log(stderr, ERR, "pit_tests field in config must not be empty", code = 108)
+				error_flag = True
+			
+			if error_flag:
+				exit(1)
+
+			log(stdout, INF, "found and loaded competition, match_tests, metrics_tests, pit_tests from config")
+
+			sys_max_threads = os.cpu_count()
+			try:
+				cfg_max_threads = config["max-threads"]
+			except:
+				log(stderr, ERR, "max-threads field in config must not be empty, refer to documentation for configuration options", code = 109)
+				exit(1)
+
+			if cfg_max_threads > -sys_max_threads and cfg_max_threads < 0 :
+				alloc_processes = sys_max_threads + cfg_max_threads
+			elif cfg_max_threads > 0 and cfg_max_threads < 1:
+				alloc_processes = math.floor(cfg_max_threads * sys_max_threads)
+			elif cfg_max_threads > 1 and cfg_max_threads <= sys_max_threads:
+				alloc_processes = cfg_max_threads
+			elif cfg_max_threads == 0:
+				alloc_processes = sys_max_threads
+			else:
+				log(stderr, ERR, "max-threads must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads) + ", but got " + cfg_max_threads, code = 110)
+				exit(1)
+
+			log(stdout, INF, "found and loaded max-threads from config")
+			log(stdout, INF, "attempting to start " + str(alloc_processes) + " threads")
+			try:
+				exec_threads = Pool(processes = alloc_processes)
+			except Exception as e:
+				log(stderr, ERR, "unable to start threads", code = 200)
+				log(stderr, INF, e)
+				exit(1)
+			log(stdout, INF, "successfully initialized " + str(alloc_processes) + " threads")
+
+			exit_flag = False
+
+			try:
+				apikey = config["key"]["database"]
+			except:
+				log(stderr, ERR, "database key field in config must not be empty, please populate the database key", code = 111)
+				exit_flag = True
+			try:
+				tbakey = config["key"]["tba"]
+			except:
+				log(stderr, ERR, "tba key field in config must not be empty, please populate the tba key", code = 112)
+				exit_flag = True
+
+			if exit_flag:
+				exit(1)
+			
+			log(stdout, INF, "found and loaded database and tba keys")
+
+			previous_time = get_previous_time(apikey)
+			log(stdout, INF, "analysis backtimed to: " + str(previous_time))
+
+			start = time.time()
+			log(stdout, INF, "loading match data")
+			match_data = load_match(apikey, competition)
+			log(stdout, INF, "finished loading match data in " + str(time.time() - start) + " seconds")
+
+			start = time.time()
+			log(stdout, INF, "performing analysis on match data")
+			results = matchloop(apikey, competition, match_data, match_tests, exec_threads)
+			log(stdout, INF, "finished match analysis in " + str(time.time() - start) + " seconds")
+
+			start = time.time()
+			log(stdout, INF, "uploading match results to database")
+			push_match(apikey, competition, results)
+			log(stdout, INF, "finished uploading match results in " + str(time.time() - start) + " seconds")
+
+			start = time.time()
+			log(stdout, INF, "performing analysis on team metrics")
+			results = metricloop(tbakey, apikey, competition, current_time, metrics_tests)
+			log(stdout, INF, "finished metric analysis and pushed to database in " + str(time.time() - start) + " seconds")
+
+			start = time.time()
+			log(stdout, INF, "loading pit data")
+			pit_data = load_pit(apikey, competition)
+			log(stdout, INF, "finished loading pit data in " + str(time.time() - start) + " seconds")
+
+			start = time.time()
+			log(stdout, INF, "performing analysis on pit data")
+			results = pitloop(apikey, competition, pit_data, pit_tests)
+			log(stdout, INF, "finished pit analysis in " + str(time.time() - start) + " seconds")
+
+			start = time.time()
+			log(stdout, INF, "uploading pit results to database")
+			push_pit(apikey, competition, results)
+			log(stdout, INF, "finished uploading pit results in " + str(time.time() - start) + " seconds")
+
+			set_current_time(apikey, current_time)
+			log(stdout, INF, "finished all tests in " + str(time.time() - loop_start) + " seconds, looping")
+
+		except KeyboardInterrupt:
+			log(stdout, INF, "detected KeyboardInterrupt, killing threads")
+			if "exec_threads" in locals():
+				exec_threads.terminate()
+				exec_threads.close()
+			log(stdout, INF, "terminated threads, exiting")
+			loop_stored_exception = sys.exc_info()
+			loop_exit_code = 0
+			break
+		except Exception as e:
+			log(stderr, ERR, "encountered an exception while running")
+			print(e, file = stderr)
+			loop_exit_code = 1
+			break
+
+	sys.exit(loop_exit_code)
 
 def load_config(path, config_vector):
 	try:
 		f = open(path, "r")
+		config_vector.update(json.load(f))
+		f.close()
+		log(stdout, INF, "found and opened config at <" + path + ">")
+		return 0
 	except:
-		log(stderr, ERR, "could not find config at <" + path + ">, generating blank config and exiting")
+		log(stderr, ERR, "could not find config at <" + path + ">, generating blank config and exiting", code = 100)
 		f = open(path, "w")
 		f.write(sample_json)
 		f.close()
 		return 1
-	
-	config_vector = json.load(f)
-	f.close()
-	return 0
 
 def save_config(path, config_vector):
 	try:
@@ -215,4 +385,6 @@ def save_config(path, config_vector):
 		return 1
 
 if __name__ == "__main__":
+	if sys.platform.startswith("win"):
+		multiprocessing.freeze_support()
 	main()
