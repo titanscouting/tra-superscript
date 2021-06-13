@@ -3,10 +3,12 @@
 # Notes:
 # setup:
 
-__version__ = "0.9.0"
+__version__ = "0.9.1"
 
 # changelog should be viewed using print(analysis.__changelog__)
 __changelog__ = """changelog:
+	0.9.1:
+		- fixed bugs in configuration item loading exception handling
 	0.9.0:
 		- moved printing and logging related functions to interface.py (changelog will stay in this file)
 		- changed function return files for load_config and save_config to standard C values (0 for success, 1 for error)
@@ -209,7 +211,7 @@ def main():
 
 			config = {}
 			if load_config(config_path, config) == 1:
-				exit(1)
+				sys.exit(1)
 
 			error_flag = False
 
@@ -235,7 +237,7 @@ def main():
 				error_flag = True
 			
 			if error_flag:
-				exit(1)
+				sys.exit(1)
 			error_flag = False
 
 			if competition == None or competition == "":
@@ -252,7 +254,7 @@ def main():
 				error_flag = True
 			
 			if error_flag:
-				exit(1)
+				sys.exit(1)
 
 			log(stdout, INF, "found and loaded competition, match_tests, metrics_tests, pit_tests from config")
 
@@ -261,7 +263,7 @@ def main():
 				cfg_max_threads = config["max-threads"]
 			except:
 				log(stderr, ERR, "max-threads field in config must not be empty, refer to documentation for configuration options", code = 109)
-				exit(1)
+				sys.exit(1)
 
 			if cfg_max_threads > -sys_max_threads and cfg_max_threads < 0 :
 				alloc_processes = sys_max_threads + cfg_max_threads
@@ -273,7 +275,7 @@ def main():
 				alloc_processes = sys_max_threads
 			else:
 				log(stderr, ERR, "max-threads must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads) + ", but got " + cfg_max_threads, code = 110)
-				exit(1)
+				sys.exit(1)
 
 			log(stdout, INF, "found and loaded max-threads from config")
 			log(stdout, INF, "attempting to start " + str(alloc_processes) + " threads")
@@ -282,7 +284,7 @@ def main():
 			except Exception as e:
 				log(stderr, ERR, "unable to start threads", code = 200)
 				log(stderr, INF, e)
-				exit(1)
+				sys.exit(1)
 			log(stdout, INF, "successfully initialized " + str(alloc_processes) + " threads")
 
 			exit_flag = False
@@ -290,16 +292,23 @@ def main():
 			try:
 				apikey = config["key"]["database"]
 			except:
-				log(stderr, ERR, "database key field in config must not be empty, please populate the database key", code = 111)
+				log(stderr, ERR, "database key field in config must be present", code = 111)
 				exit_flag = True
 			try:
 				tbakey = config["key"]["tba"]
 			except:
-				log(stderr, ERR, "tba key field in config must not be empty, please populate the tba key", code = 112)
+				log(stderr, ERR, "tba key field in config must be present", code = 112)
+				exit_flag = True
+
+			if apikey == None or apikey == "":
+				log(stderr, ERR, "database key field in config must not be empty, please populate the database key")
+				exit_flag = True
+			if tbakey == None or tbakey == "":
+				log(stderr, ERR, "tba key field in config must not be empty, please populate the tba key")
 				exit_flag = True
 
 			if exit_flag:
-				exit(1)
+				sys.exit(1)
 			
 			log(stdout, INF, "found and loaded database and tba keys")
 
