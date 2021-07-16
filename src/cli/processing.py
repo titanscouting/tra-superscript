@@ -4,7 +4,11 @@ from tra_analysis import Analysis as an
 from dataset import push_metric
 from data import pull_new_tba_matches
 
+import signal
+
 def simplestats(data_test):
+
+	signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 	data = np.array(data_test[0])
 	data = data[np.isfinite(data)]

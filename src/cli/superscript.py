@@ -357,6 +357,7 @@ def main():
 			log(stdout, INF, "detected KeyboardInterrupt, killing threads")
 			if "exec_threads" in locals():
 				exec_threads.terminate()
+				exec_threads.join()
 				exec_threads.close()
 			log(stdout, INF, "terminated threads, exiting")
 			loop_stored_exception = sys.exc_info()
