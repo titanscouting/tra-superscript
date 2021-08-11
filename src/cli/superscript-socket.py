@@ -10,6 +10,7 @@ import warnings
 import sys
 import asyncio
 import websockets
+import lockfile
 
 from interface import splash, log, ERR, INF, stdout, stderr
 from dataset import get_previous_time, set_current_time, load_match, push_match, load_metric, push_metric, load_pit, push_pit
@@ -267,9 +268,16 @@ def save_config(path, config_vector):
 	except:
 		return 1
 
+import daemon
+from daemon import pidfile
+
 if __name__ == "__main__":
-	if sys.platform.startswith("win"):
-		multiprocessing.freeze_support()
-	start_server = websockets.serve(main, "127.0.0.1", 5678)
-	asyncio.get_event_loop().run_until_complete(start_server)
-	asyncio.get_event_loop().run_forever()
+	with daemon.DaemonContext(
+		working_directory=os.getcwd(),
+		pidfile=pidfile.TimeoutPIDLockFile("/var/run/tra-daemon.pid"),
+		):
+		if sys.platform.startswith("win"):
+			multiprocessing.freeze_support()
+		start_server = websockets.serve(main, "127.0.0.1", 5678)
+		asyncio.get_event_loop().run_until_complete(start_server)
+		asyncio.get_event_loop().run_forever()
