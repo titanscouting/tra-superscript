@@ -270,14 +270,57 @@ def save_config(path, config_vector):
 
 import daemon
 from daemon import pidfile
+from signal import SIGTERM
 
-if __name__ == "__main__":
+def start(pid_path):
+	#print("starting")
 	with daemon.DaemonContext(
 		working_directory=os.getcwd(),
-		pidfile=pidfile.TimeoutPIDLockFile("/var/run/tra-daemon.pid"),
+		pidfile=pidfile.TimeoutPIDLockFile(pid_path),
 		):
-		if sys.platform.startswith("win"):
-			multiprocessing.freeze_support()
 		start_server = websockets.serve(main, "127.0.0.1", 5678)
 		asyncio.get_event_loop().run_until_complete(start_server)
 		asyncio.get_event_loop().run_forever()
+
+def stop(pid_path):
+	#print("stopping")
+	try:
+		pf = open(pid_path, 'r')
+		pid = int(pf.read().strip())
+		pf.close()
+	except IOError:
+		sys.stderr.write("pidfile at <" + pid_path + "> does not exist. Daemon not running?\n")
+		return
+	
+	try:
+		os.kill(pid, SIGTERM)
+		return
+	except OSError as err:
+		if err.find("No such process") > 0:
+			if os.path.exists(pid_path):
+				os.remove(pid_path)
+		else:
+			print(str(err))
+			sys.exit(1)
+
+def restart(pid_path):
+	#print("restarting")
+	stop(pid_path)
+	start(pid_path)
+
+if __name__ == "__main__":
+	pid_path = "/var/run/tra-daemon.pid"
+	if len(sys.argv) == 2:
+		if 'start' == sys.argv[1]:
+			start(pid_path)
+		elif 'stop' == sys.argv[1]:
+			stop(pid_path)
+		elif 'restart' == sys.argv[1]:
+			restart(pid_path)
+		else:
+			print("usage: %s start|stop|restart" % sys.argv[0])
+			sys.exit(2)
+		sys.exit(0)
+	else:
+		print("usage: %s start|stop|restart" % sys.argv[0])
+		sys.exit(2)
