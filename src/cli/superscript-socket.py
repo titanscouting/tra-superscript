@@ -291,11 +291,13 @@ def stop(pid_path):
 	except IOError:
 		sys.stderr.write("pidfile at <" + pid_path + "> does not exist. Daemon not running?\n")
 		return
-	
+
 	try:
-		os.kill(pid, SIGTERM)
-		return
+		while True:
+			os.kill(pid, SIGTERM)
+			time.sleep(0.01)
 	except OSError as err:
+		err = str(err)
 		if err.find("No such process") > 0:
 			if os.path.exists(pid_path):
 				os.remove(pid_path)
