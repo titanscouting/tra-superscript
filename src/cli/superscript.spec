@@ -2,7 +2,6 @@
 
 block_cipher = None
 
-
 a = Analysis(['superscript.py'],
              pathex=['/workspaces/tra-data-analysis/src'],
              binaries=[],
