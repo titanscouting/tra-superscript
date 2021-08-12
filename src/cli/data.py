@@ -1,7 +1,6 @@
 import requests
 import pymongo
 import pandas as pd
-import time
 
 def pull_new_tba_matches(apikey, competition, cutoff):
 	api_key= apikey 
@@ -55,7 +54,7 @@ def get_metrics_data_formatted(apikey, competition):
 	out = {}
 	for i in x:
 		try:
-			out[int(i)] = d.get_team_metrics_data(apikey, competition, int(i))
+			out[int(i)] = get_team_metrics_data(apikey, competition, int(i))
 		except:
 			pass
 	return out
@@ -127,3 +126,76 @@ def unkeyify_2l(layered_dict):
 		add.sort(key = lambda x: x[0])
 		out[i] = list(map(lambda x: x[1], add))
 	return out
+
+def get_previous_time(apikey):
+
+	previous_time = get_analysis_flags(apikey, "latest_update")
+
+	if previous_time == None:
+
+		set_analysis_flags(apikey, "latest_update", 0)
+		previous_time = 0
+
+	else:
+
+		previous_time = previous_time["latest_update"]
+
+	return previous_time
+
+def set_current_time(apikey, current_time):
+
+	set_analysis_flags(apikey, "latest_update", {"latest_update":current_time})
+
+def load_match(apikey, competition):
+
+	return get_match_data_formatted(apikey, competition)
+
+def load_metric(apikey, competition, match, group_name, metrics):
+
+	group = {}
+
+	for team in match[group_name]:
+
+		db_data = get_team_metrics_data(apikey, competition, team)
+
+		if get_team_metrics_data(apikey, competition, team) == None:
+
+			elo = {"score": metrics["elo"]["score"]}
+			gl2 = {"score": metrics["gl2"]["score"], "rd": metrics["gl2"]["rd"], "vol": metrics["gl2"]["vol"]}
+			ts = {"mu": metrics["ts"]["mu"], "sigm+a": metrics["ts"]["sigma"]}
+
+			group[team] = {"elo": elo, "gl2": gl2, "ts": ts}
+
+		else:
+
+			metrics = db_data["metrics"]
+
+			elo = metrics["elo"]
+			gl2 = metrics["gl2"]
+			ts = metrics["ts"]
+
+			group[team] = {"elo": elo, "gl2": gl2, "ts": ts}
+
+	return group
+
+def load_pit(apikey, competition):
+
+	return get_pit_data_formatted(apikey, competition)
+
+def push_match(apikey, competition, results):
+
+	for team in results:
+
+		push_team_tests_data(apikey, competition, team, results[team])
+
+def push_metric(apikey, competition, metric):
+
+	for team in metric:
+
+		push_team_metrics_data(apikey, competition, team, metric[team])
+
+def push_pit(apikey, competition, pit):
+
+	for variable in pit:
+
+		push_team_pit_data(apikey, competition, variable, pit[variable])

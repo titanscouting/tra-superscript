@@ -1,7 +1,7 @@
 import numpy as np
 
 from tra_analysis import Analysis as an
-from dataset import push_metric
+from dataset import push_metric, load_metric
 from data import pull_new_tba_matches
 
 import signal
