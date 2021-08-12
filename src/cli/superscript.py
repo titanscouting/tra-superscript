@@ -130,16 +130,15 @@ __all__ = [
 # imports:
 
 import json
-import multiprocessing
 import os
 import math
-from multiprocessing import Pool
+from multiprocessing import Pool, freeze_support
 import time
 import warnings
 import sys
 
 from interface import splash, log, ERR, INF, stdout, stderr
-from dataset import get_previous_time, set_current_time, load_match, push_match, load_metric, push_metric, load_pit, push_pit
+from data import get_previous_time, set_current_time, load_match, push_match, load_metric, push_metric, load_pit, push_pit
 from processing import matchloop, metricloop, pitloop
 
 config_path = "config.json"
@@ -396,5 +395,5 @@ def save_config(path, config_vector):
 
 if __name__ == "__main__":
 	if sys.platform.startswith("win"):
-		multiprocessing.freeze_support()
+		freeze_support()
 	main()
