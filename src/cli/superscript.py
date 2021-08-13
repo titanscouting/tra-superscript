@@ -3,10 +3,13 @@
 # Notes:
 # setup:
 
-__version__ = "0.9.1"
+__version__ = "0.9.2"
 
 # changelog should be viewed using print(analysis.__changelog__)
 __changelog__ = """changelog:
+	0.9.2:
+		- removed unessasary imports from data
+		- minor changes to interface
 	0.9.1:
 		- fixed bugs in configuration item loading exception handling
 	0.9.0:
@@ -138,7 +141,7 @@ import warnings
 import sys
 
 from interface import splash, log, ERR, INF, stdout, stderr
-from data import get_previous_time, set_current_time, load_match, push_match, load_metric, push_metric, load_pit, push_pit
+from data import get_previous_time, set_current_time, load_match, push_match, load_pit, push_pit
 from processing import matchloop, metricloop, pitloop
 
 config_path = "config.json"
