@@ -17,7 +17,7 @@ stderr = sys.stderr
 
 def log(target, level, message, code = 0):
 
-	message = time.ctime() + empty_delim + str(level) + l_brack + f"{code:04}" + r_brack + empty_delim + soft_divided_delim + empty_delim + message
+	message = time.ctime() + empty_delim + str(level) + l_brack + f"{code:+05}" + r_brack + empty_delim + soft_divided_delim + empty_delim + message
 	print(message, file = target)
 
 def clear():

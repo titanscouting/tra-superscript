@@ -309,7 +309,7 @@ def restart(pid_path):
 	start(pid_path)
 
 if __name__ == "__main__":
-	pid_path = "/var/run/tra-daemon.pid"
+	pid_path = "tra-daemon.pid"
 	if len(sys.argv) == 2:
 		if 'start' == sys.argv[1]:
 			start(pid_path)
