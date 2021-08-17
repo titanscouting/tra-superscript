@@ -3,10 +3,17 @@
 # Notes:
 # setup:
 
-__version__ = "0.9.2"
+__version__ = "1.0.0"
 
 # changelog should be viewed using print(analysis.__changelog__)
 __changelog__ = """changelog:
+	1.0.0:
+		- superscript now runs in PEP 3143 compliant well behaved daemon on Linux systems
+		- linux superscript daemon has integrated websocket output to monitor progress/status remotely
+		- linux daemon now sends stderr to errorlog.txt
+	0.9.3:
+		- improved data loading performance by removing redundant PyMongo client creation (120s to 14s)
+		- passed singular instance of PyMongo client as standin for apikey parameter in all data.py functions
 	0.9.2:
 		- removed unessasary imports from data
 		- minor changes to interface
@@ -139,9 +146,12 @@ from multiprocessing import Pool, freeze_support
 import time
 import warnings
 import sys
+import asyncio
+import websockets
+import pymongo
 
 from interface import splash, log, ERR, INF, stdout, stderr
-from data import get_previous_time, set_current_time, load_match, push_match, load_pit, push_pit
+from data import get_previous_time, set_current_time, load_match, push_match, load_metric, push_metric, load_pit, push_pit
 from processing import matchloop, metricloop, pitloop
 
 config_path = "config.json"
@@ -192,7 +202,181 @@ sample_json = """{
 	}
 }"""
 
-def main():
+async def main_lin(socket, path):
+
+	while True:
+
+		try:
+
+			loop_start = time.time()
+
+			current_time = time.time()
+			await socket.send("current time: " + str(current_time))
+
+			config = {}
+			if load_config(config_path, config) == 1:
+				sys.exit(1)
+
+			error_flag = False
+
+			try:
+				competition = config["competition"]
+			except:
+				await socket.send("could not find competition field in config")
+				error_flag = True
+			try:
+				match_tests = config["statistics"]["match"]
+			except:
+				await socket.send("could not find match_tests field in config")
+				error_flag = True
+			try:
+				metrics_tests = config["statistics"]["metric"]
+			except:
+				await socket.send("could not find metrics_tests field in config")
+				error_flag = True
+			try:
+				pit_tests = config["statistics"]["pit"]
+			except:
+				await socket.send("could not find pit_tests field in config")
+				error_flag = True
+			
+			if error_flag:
+				sys.exit(1)
+			error_flag = False
+
+			if competition == None or competition == "":
+				await socket.send("competition field in config must not be empty")
+				error_flag = True
+			if match_tests == None:
+				await socket.send("match_tests field in config must not be empty")
+				error_flag = True
+			if metrics_tests == None:
+				await socket.send("metrics_tests field in config must not be empty")
+				error_flag = True
+			if pit_tests == None:
+				await socket.send("pit_tests field in config must not be empty")
+				error_flag = True
+			
+			if error_flag:
+				sys.exit(1)
+
+			await socket.send("found and loaded competition, match_tests, metrics_tests, pit_tests from config")
+
+			sys_max_threads = os.cpu_count()
+			try:
+				cfg_max_threads = config["max-threads"]
+			except:
+				await socket.send("max-threads field in config must not be empty, refer to documentation for configuration options", code = 109)
+				sys.exit(1)
+
+			if cfg_max_threads > -sys_max_threads and cfg_max_threads < 0 :
+				alloc_processes = sys_max_threads + cfg_max_threads
+			elif cfg_max_threads > 0 and cfg_max_threads < 1:
+				alloc_processes = math.floor(cfg_max_threads * sys_max_threads)
+			elif cfg_max_threads > 1 and cfg_max_threads <= sys_max_threads:
+				alloc_processes = cfg_max_threads
+			elif cfg_max_threads == 0:
+				alloc_processes = sys_max_threads
+			else:
+				await socket.send("max-threads must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads) + ", but got " + cfg_max_threads)
+				sys.exit(1)
+
+			await socket.send("found and loaded max-threads from config")
+			await socket.send("attempting to start " + str(alloc_processes) + " threads")
+			try:
+				exec_threads = Pool(processes = alloc_processes)
+			except Exception as e:
+				await socket.send("unable to start threads")
+				sys.exit(1)
+			await socket.send("successfully initialized " + str(alloc_processes) + " threads")
+
+			exit_flag = False
+
+			try:
+				apikey = config["key"]["database"]
+			except:
+				await socket.send("database key field in config must be present")
+				exit_flag = True
+			try:
+				tbakey = config["key"]["tba"]
+			except:
+				await socket.send("tba key field in config must be present")
+				exit_flag = True
+
+			if apikey == None or apikey == "":
+				await socket.send("database key field in config must not be empty, please populate the database key")
+				exit_flag = True
+			if tbakey == None or tbakey == "":
+				await socket.send("tba key field in config must not be empty, please populate the tba key")
+				exit_flag = True
+
+			if exit_flag:
+				sys.exit(1)
+			
+			await socket.send("found and loaded database and tba keys")
+
+			client = pymongo.MongoClient(apikey)
+
+			previous_time = get_previous_time(client)
+			await socket.send("analysis backtimed to: " + str(previous_time))
+
+			start = time.time()
+			await socket.send("loading match data")
+			match_data = load_match(client, competition)
+			await socket.send("finished loading match data in " + str(time.time() - start) + " seconds")
+
+			start = time.time()
+			await socket.send("performing analysis on match data")
+			results = matchloop(client, competition, match_data, match_tests, exec_threads)
+			await socket.send("finished match analysis in " + str(time.time() - start) + " seconds")
+
+			start = time.time()
+			await socket.send("uploading match results to database")
+			push_match(client, competition, results)
+			await socket.send("finished uploading match results in " + str(time.time() - start) + " seconds")
+
+			start = time.time()
+			await socket.send("performing analysis on team metrics")
+			results = metricloop(tbakey, client, competition, current_time, metrics_tests)
+			await socket.send("finished metric analysis and pushed to database in " + str(time.time() - start) + " seconds")
+
+			start = time.time()
+			await socket.send("loading pit data")
+			pit_data = load_pit(client, competition)
+			await socket.send("finished loading pit data in " + str(time.time() - start) + " seconds")
+
+			start = time.time()
+			await socket.send("performing analysis on pit data")
+			results = pitloop(client, competition, pit_data, pit_tests)
+			await socket.send("finished pit analysis in " + str(time.time() - start) + " seconds")
+
+			start = time.time()
+			await socket.send("uploading pit results to database")
+			push_pit(client, competition, results)
+			await socket.send("finished uploading pit results in " + str(time.time() - start) + " seconds")
+
+			set_current_time(client, current_time)
+			await socket.send("finished all tests in " + str(time.time() - loop_start) + " seconds, looping")
+
+		except KeyboardInterrupt:
+			await socket.send("detected KeyboardInterrupt, killing threads")
+			if "exec_threads" in locals():
+				exec_threads.terminate()
+				exec_threads.join()
+				exec_threads.close()
+			await socket.send("terminated threads, exiting")
+			loop_stored_exception = sys.exc_info()
+			loop_exit_code = 0
+			break
+		except Exception as e:
+			await socket.send("encountered an exception while running")
+			print(e)
+			loop_exit_code = 1
+			break
+
+	sys.exit(loop_exit_code)
+
+def main_win(): # windows main function
 
 	warnings.filterwarnings("ignore")
 	sys.stderr = open("errorlog.txt", "w")
@@ -314,45 +498,47 @@ def main():
 			
 			log(stdout, INF, "found and loaded database and tba keys")
 
-			previous_time = get_previous_time(apikey)
+			client = pymongo.MongoClient(apikey)
+
+			previous_time = get_previous_time(client)
 			log(stdout, INF, "analysis backtimed to: " + str(previous_time))
 
 			start = time.time()
 			log(stdout, INF, "loading match data")
-			match_data = load_match(apikey, competition)
+			match_data = load_match(client, competition)
 			log(stdout, INF, "finished loading match data in " + str(time.time() - start) + " seconds")
 
 			start = time.time()
 			log(stdout, INF, "performing analysis on match data")
-			results = matchloop(apikey, competition, match_data, match_tests, exec_threads)
+			results = matchloop(client, competition, match_data, match_tests, exec_threads)
 			log(stdout, INF, "finished match analysis in " + str(time.time() - start) + " seconds")
 
 			start = time.time()
 			log(stdout, INF, "uploading match results to database")
-			push_match(apikey, competition, results)
+			push_match(client, competition, results)
 			log(stdout, INF, "finished uploading match results in " + str(time.time() - start) + " seconds")
 
 			start = time.time()
 			log(stdout, INF, "performing analysis on team metrics")
-			results = metricloop(tbakey, apikey, competition, current_time, metrics_tests)
+			results = metricloop(tbakey, client, competition, current_time, metrics_tests)
 			log(stdout, INF, "finished metric analysis and pushed to database in " + str(time.time() - start) + " seconds")
 
 			start = time.time()
 			log(stdout, INF, "loading pit data")
-			pit_data = load_pit(apikey, competition)
+			pit_data = load_pit(client, competition)
 			log(stdout, INF, "finished loading pit data in " + str(time.time() - start) + " seconds")
 
 			start = time.time()
 			log(stdout, INF, "performing analysis on pit data")
-			results = pitloop(apikey, competition, pit_data, pit_tests)
+			results = pitloop(client, competition, pit_data, pit_tests)
 			log(stdout, INF, "finished pit analysis in " + str(time.time() - start) + " seconds")
 
 			start = time.time()
 			log(stdout, INF, "uploading pit results to database")
-			push_pit(apikey, competition, results)
+			push_pit(client, competition, results)
 			log(stdout, INF, "finished uploading pit results in " + str(time.time() - start) + " seconds")
 
-			set_current_time(apikey, current_time)
+			set_current_time(client, current_time)
 			log(stdout, INF, "finished all tests in " + str(time.time() - loop_start) + " seconds, looping")
 
 		except KeyboardInterrupt:
@@ -378,10 +564,10 @@ def load_config(path, config_vector):
 		f = open(path, "r")
 		config_vector.update(json.load(f))
 		f.close()
-		log(stdout, INF, "found and opened config at <" + path + ">")
+		#socket.send("found and opened config at <" + path + ">")
 		return 0
 	except:
-		log(stderr, ERR, "could not find config at <" + path + ">, generating blank config and exiting", code = 100)
+		#log(stderr, ERR, "could not find config at <" + path + ">, generating blank config and exiting", code = 100)
 		f = open(path, "w")
 		f.write(sample_json)
 		f.close()
@@ -396,7 +582,66 @@ def save_config(path, config_vector):
 	except:
 		return 1
 
+import daemon
+from daemon import pidfile
+from signal import SIGTERM
+
+def start(pid_path, profile = False):
+	f = open('errorlog.txt', 'w+')
+	with daemon.DaemonContext(
+		working_directory=os.getcwd(),
+		pidfile=pidfile.TimeoutPIDLockFile(pid_path),
+		stderr=f
+		):
+		start_server = websockets.serve(main_lin, "127.0.0.1", 5678)
+		asyncio.get_event_loop().run_until_complete(start_server)
+		asyncio.get_event_loop().run_forever()
+
+def stop(pid_path):
+	try:
+		pf = open(pid_path, 'r')
+		pid = int(pf.read().strip())
+		pf.close()
+	except IOError:
+		sys.stderr.write("pidfile at <" + pid_path + "> does not exist. Daemon not running?\n")
+		return
+
+	try:
+		while True:
+			os.kill(pid, SIGTERM)
+			time.sleep(0.01)
+	except OSError as err:
+		err = str(err)
+		if err.find("No such process") > 0:
+			if os.path.exists(pid_path):
+				os.remove(pid_path)
+		else:
+			print(str(err))
+			sys.exit(1)
+
+def restart(pid_path):
+	stop(pid_path)
+	start(pid_path)
+
 if __name__ == "__main__":
+
 	if sys.platform.startswith("win"):
 		freeze_support()
-	main()
+		main_win()
+
+	else:
+		pid_path = "tra-daemon.pid"
+		if len(sys.argv) == 2:
+			if 'start' == sys.argv[1]:
+				start(pid_path)
+			elif 'stop' == sys.argv[1]:
+				stop(pid_path)
+			elif 'restart' == sys.argv[1]:
+				restart(pid_path)
+			else:
+				print("usage: %s start|stop|restart|profile" % sys.argv[0])
+				sys.exit(2)
+			sys.exit(0)
+		else:
+			print("usage: %s start|stop|restart|profile" % sys.argv[0])
+			sys.exit(2)

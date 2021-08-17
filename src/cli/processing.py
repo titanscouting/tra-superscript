@@ -36,7 +36,7 @@ def simplestats(data_test):
 	if test == "regression_sigmoidal":
 		return an.regression(ranges, data, ['sig'])
 
-def matchloop(apikey, competition, data, tests, exec_threads):
+def matchloop(client, competition, data, tests, exec_threads):
 
 	short_mapping = {"regression_linear": "lin", "regression_logarithmic": "log", "regression_exponential": "exp", "regression_polynomial": "ply", "regression_sigmoidal": "sig"}
 
@@ -88,7 +88,7 @@ def matchloop(apikey, competition, data, tests, exec_threads):
 
 	return return_vector
 
-def metricloop(tbakey, apikey, competition, timestamp, metrics): # listener based metrics update
+def metricloop(tbakey, client, competition, timestamp, metrics): # listener based metrics update
 
 	elo_N = metrics["elo"]["N"]
 	elo_K = metrics["elo"]["K"]
@@ -100,8 +100,8 @@ def metricloop(tbakey, apikey, competition, timestamp, metrics): # listener base
 
 	for match in matches:
 
-		red = load_metric(apikey, competition, match, "red", metrics)
-		blu = load_metric(apikey, competition, match, "blue", metrics)
+		red = load_metric(client, competition, match, "red", metrics)
+		blu = load_metric(client, competition, match, "blue", metrics)
  
 		elo_red_total = 0
 		elo_blu_total = 0
@@ -179,9 +179,9 @@ def metricloop(tbakey, apikey, competition, timestamp, metrics): # listener base
 		temp_vector.update(red)
 		temp_vector.update(blu)
 
-		push_metric(apikey, competition, temp_vector)
+		push_metric(client, competition, temp_vector)
 
-def pitloop(apikey, competition, pit, tests):
+def pitloop(client, competition, pit, tests):
 
 	return_vector = {}
 	for team in pit:

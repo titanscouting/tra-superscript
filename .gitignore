@@ -11,6 +11,8 @@
 
 **/*.pid
 
+**/profile
+
 **/errorlog.txt
 /dist/superscript.*
 /dist/superscript
