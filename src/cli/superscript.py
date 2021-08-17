@@ -376,7 +376,7 @@ async def main_lin(socket, path):
 
 	sys.exit(loop_exit_code)
 
-def main_win(): # windows main function
+def main_win():
 
 	warnings.filterwarnings("ignore")
 	sys.stderr = open("errorlog.txt", "w")
@@ -582,10 +582,6 @@ def save_config(path, config_vector):
 	except:
 		return 1
 
-import daemon
-from daemon import pidfile
-from signal import SIGTERM
-
 def start(pid_path, profile = False):
 	f = open('errorlog.txt', 'w+')
 	with daemon.DaemonContext(
@@ -630,6 +626,9 @@ if __name__ == "__main__":
 		main_win()
 
 	else:
+		import daemon
+		from daemon import pidfile
+		from signal import SIGTERM
 		pid_path = "tra-daemon.pid"
 		if len(sys.argv) == 2:
 			if 'start' == sys.argv[1]:
