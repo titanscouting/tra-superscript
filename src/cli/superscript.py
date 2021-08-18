@@ -371,7 +371,7 @@ async def main_lin(socket, path):
 			break
 		except Exception as e:
 			await socket.send("encountered an exception while running")
-			print(e)
+			await socket.send(str(e))
 			loop_exit_code = 1
 			break
 
