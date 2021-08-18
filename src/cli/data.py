@@ -1,10 +1,9 @@
 import requests
-import pymongo
 import pandas as pd
 
 def pull_new_tba_matches(apikey, competition, cutoff):
 	api_key= apikey 
-	x=requests.get("https://www.thebluealliance.com/api/v3/event/"+competition+"/matches/simple", headers={"X-TBA-Auth_Key":api_key})
+	x=requests.get("https://www.thebluealliance.com/api/v3/event/"+competition+"/matches/simple", headers={"X-TBA-Auth_Key":api_key}, verify=False)
 	out = []
 	for i in x.json():
 		if i["actual_time"] != None and i["actual_time"]-cutoff >= 0 and i["comp_level"] == "qm":
