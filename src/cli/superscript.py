@@ -205,223 +205,17 @@ sample_json = """{
 	}
 }"""
 
-def main_lin(pid_path):
-	f = open('errorlog.txt', 'w+')
-	with daemon.DaemonContext(
-		working_directory=os.getcwd(),
-		pidfile=pidfile.TimeoutPIDLockFile(pid_path),
-		stderr=f
-		):
+def main(send, verbose = False):
 
-		async def handler(client, path):
-			clients.append(client)
-			while True:
-				try:
-					pong_waiter = await client.ping()
-					await pong_waiter
-					time.sleep(3)
-				except Exception as e:
-					clients.remove(client)
-					break
+	if verbose :
 
-		clients = []
-		start_server = websockets.serve(handler, "0.0.0.0", 5678)
+		warnings.filterwarnings("ignore")
+		sys.stderr = open("errorlog.txt", "w")
 
-		asyncio.get_event_loop().run_until_complete(start_server)
-		threading.Thread(target = asyncio.get_event_loop().run_forever).start()
+		splash(__version__)
 
-		while True:
-
-			async def send_one(client, data):
-				await client.send(data)
-			
-			def send(data):
-				message_clients = clients.copy()
-				for client in message_clients:
-					try:
-						asyncio.run(send_one(client, data))
-					except:
-						pass
-
-			try:
-
-				loop_start = time.time()
-
-				current_time = time.time()
-				send("current time: " + str(current_time))
-
-				config = {}
-				if load_config(config_path, config) == 1:
-					sys.exit(1)
-
-				error_flag = False
-
-				try:
-					competition = config["competition"]
-				except:
-					send("could not find competition field in config")
-					error_flag = True
-				try:
-					match_tests = config["statistics"]["match"]
-				except:
-					send("could not find match_tests field in config")
-					error_flag = True
-				try:
-					metrics_tests = config["statistics"]["metric"]
-				except:
-					send("could not find metrics_tests field in config")
-					error_flag = True
-				try:
-					pit_tests = config["statistics"]["pit"]
-				except:
-					send("could not find pit_tests field in config")
-					error_flag = True
-				
-				if error_flag:
-					sys.exit(1)
-				error_flag = False
-
-				if competition == None or competition == "":
-					send("competition field in config must not be empty")
-					error_flag = True
-				if match_tests == None:
-					send("match_tests field in config must not be empty")
-					error_flag = True
-				if metrics_tests == None:
-					send("metrics_tests field in config must not be empty")
-					error_flag = True
-				if pit_tests == None:
-					send("pit_tests field in config must not be empty")
-					error_flag = True
-				
-				if error_flag:
-					sys.exit(1)
-
-				send("found and loaded competition, match_tests, metrics_tests, pit_tests from config")
-
-				sys_max_threads = os.cpu_count()
-				try:
-					cfg_max_threads = config["max-threads"]
-				except:
-					send("max-threads field in config must not be empty, refer to documentation for configuration options", code = 109)
-					sys.exit(1)
-
-				if cfg_max_threads > -sys_max_threads and cfg_max_threads < 0 :
-					alloc_processes = sys_max_threads + cfg_max_threads
-				elif cfg_max_threads > 0 and cfg_max_threads < 1:
-					alloc_processes = math.floor(cfg_max_threads * sys_max_threads)
-				elif cfg_max_threads > 1 and cfg_max_threads <= sys_max_threads:
-					alloc_processes = cfg_max_threads
-				elif cfg_max_threads == 0:
-					alloc_processes = sys_max_threads
-				else:
-					send("max-threads must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads) + ", but got " + cfg_max_threads)
-					sys.exit(1)
-
-				send("found and loaded max-threads from config")
-				send("attempting to start " + str(alloc_processes) + " threads")
-				try:
-					exec_threads = Pool(processes = alloc_processes)
-				except Exception as e:
-					send("unable to start threads")
-					sys.exit(1)
-				send("successfully initialized " + str(alloc_processes) + " threads")
-
-				exit_flag = False
-
-				try:
-					apikey = config["key"]["database"]
-				except:
-					send("database key field in config must be present")
-					exit_flag = True
-				try:
-					tbakey = config["key"]["tba"]
-				except:
-					send("tba key field in config must be present")
-					exit_flag = True
-
-				if apikey == None or apikey == "":
-					send("database key field in config must not be empty, please populate the database key")
-					exit_flag = True
-				if tbakey == None or tbakey == "":
-					send("tba key field in config must not be empty, please populate the tba key")
-					exit_flag = True
-
-				if exit_flag:
-					sys.exit(1)
-				
-				send("found and loaded database and tba keys")
-
-				client = pymongo.MongoClient(apikey)
-
-				previous_time = get_previous_time(client)
-				send("analysis backtimed to: " + str(previous_time))
-
-				start = time.time()
-				send("loading match data")
-				match_data = load_match(client, competition)
-				send("finished loading match data in " + str(time.time() - start) + " seconds")
-
-				start = time.time()
-				send("performing analysis on match data")
-				results = matchloop(client, competition, match_data, match_tests, exec_threads)
-				send("finished match analysis in " + str(time.time() - start) + " seconds")
-
-				start = time.time()
-				send("uploading match results to database")
-				push_match(client, competition, results)
-				send("finished uploading match results in " + str(time.time() - start) + " seconds")
-
-				start = time.time()
-				send("performing analysis on team metrics")
-				results = metricloop(tbakey, client, competition, current_time, metrics_tests)
-				send("finished metric analysis and pushed to database in " + str(time.time() - start) + " seconds")
-
-				start = time.time()
-				send("loading pit data")
-				pit_data = load_pit(client, competition)
-				send("finished loading pit data in " + str(time.time() - start) + " seconds")
-
-				start = time.time()
-				send("performing analysis on pit data")
-				results = pitloop(client, competition, pit_data, pit_tests)
-				send("finished pit analysis in " + str(time.time() - start) + " seconds")
-
-				start = time.time()
-				send("uploading pit results to database")
-				push_pit(client, competition, results)
-				send("finished uploading pit results in " + str(time.time() - start) + " seconds")
-
-				set_current_time(client, current_time)
-				send("finished all tests in " + str(time.time() - loop_start) + " seconds, looping")
-
-			except KeyboardInterrupt:
-				send("detected KeyboardInterrupt, killing threads")
-				if "exec_threads" in locals():
-					exec_threads.terminate()
-					exec_threads.join()
-					exec_threads.close()
-				send("terminated threads, exiting")
-				loop_stored_exception = sys.exc_info()
-				loop_exit_code = 0
-				break
-			except Exception as e:
-				send("encountered an exception while running")
-				send(str(e))
-				loop_exit_code = 1
-				break
-
-		sys.exit(loop_exit_code)
-
-def main_win():
-
-	warnings.filterwarnings("ignore")
-	sys.stderr = open("errorlog.txt", "w")
-
-	splash(__version__)
-
-	loop_exit_code = 0
-	loop_stored_exception = None
+		loop_exit_code = 0
+		loop_stored_exception = None
 
 	while True:
 
@@ -430,33 +224,38 @@ def main_win():
 			loop_start = time.time()
 
 			current_time = time.time()
-			log(stdout, INF, "current time: " + str(current_time))
+			send(stdout, INF, "current time: " + str(current_time))
+
+			send(stdout, INF, "loading config at <" + config_path + ">", code = 0)
 
 			config = {}
 			if load_config(config_path, config) == 1:
+				send(stderr, ERR, "could not find config at <" + config_path + ">, generating blank config and exiting", code = 100)
 				sys.exit(1)
+
+			send(stdout, INF, "found and opened config at <" + config_path + ">", code = 0)
 
 			error_flag = False
 
 			try:
 				competition = config["competition"]
 			except:
-				log(stderr, ERR, "could not find competition field in config", code = 101)
+				send(stderr, ERR, "could not find competition field in config", code = 101)
 				error_flag = True
 			try:
 				match_tests = config["statistics"]["match"]
 			except:
-				log(stderr, ERR, "could not find match_tests field in config", code = 102)
+				send(stderr, ERR, "could not find match_tests field in config", code = 102)
 				error_flag = True
 			try:
 				metrics_tests = config["statistics"]["metric"]
 			except:
-				log(stderr, ERR, "could not find metrics_tests field in config", code = 103)
+				send(stderr, ERR, "could not find metrics_tests field in config", code = 103)
 				error_flag = True
 			try:
 				pit_tests = config["statistics"]["pit"]
 			except:
-				log(stderr, ERR, "could not find pit_tests field in config", code = 104)
+				send(stderr, ERR, "could not find pit_tests field in config", code = 104)
 				error_flag = True
 			
 			if error_flag:
@@ -464,28 +263,28 @@ def main_win():
 			error_flag = False
 
 			if competition == None or competition == "":
-				log(stderr, ERR, "competition field in config must not be empty", code = 105)
+				send(stderr, ERR, "competition field in config must not be empty", code = 105)
 				error_flag = True
 			if match_tests == None:
-				log(stderr, ERR, "match_tests field in config must not be empty", code = 106)
+				send(stderr, ERR, "match_tests field in config must not be empty", code = 106)
 				error_flag = True
 			if metrics_tests == None:
-				log(stderr, ERR, "metrics_tests field in config must not be empty", code = 107)
+				send(stderr, ERR, "metrics_tests field in config must not be empty", code = 107)
 				error_flag = True
 			if pit_tests == None:
-				log(stderr, ERR, "pit_tests field in config must not be empty", code = 108)
+				send(stderr, ERR, "pit_tests field in config must not be empty", code = 108)
 				error_flag = True
 			
 			if error_flag:
 				sys.exit(1)
 
-			log(stdout, INF, "found and loaded competition, match_tests, metrics_tests, pit_tests from config")
+			send(stdout, INF, "found and loaded competition, match_tests, metrics_tests, pit_tests from config")
 
 			sys_max_threads = os.cpu_count()
 			try:
 				cfg_max_threads = config["max-threads"]
 			except:
-				log(stderr, ERR, "max-threads field in config must not be empty, refer to documentation for configuration options", code = 109)
+				send(stderr, ERR, "max-threads field in config must not be empty, refer to documentation for configuration options", code = 109)
 				sys.exit(1)
 
 			if cfg_max_threads > -sys_max_threads and cfg_max_threads < 0 :
@@ -497,99 +296,101 @@ def main_win():
 			elif cfg_max_threads == 0:
 				alloc_processes = sys_max_threads
 			else:
-				log(stderr, ERR, "max-threads must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads) + ", but got " + cfg_max_threads, code = 110)
+				send(stderr, ERR, "max-threads must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads) + ", but got " + cfg_max_threads, code = 110)
 				sys.exit(1)
 
-			log(stdout, INF, "found and loaded max-threads from config")
-			log(stdout, INF, "attempting to start " + str(alloc_processes) + " threads")
+			send(stdout, INF, "found and loaded max-threads from config")
+			send(stdout, INF, "attempting to start " + str(alloc_processes) + " threads")
 			try:
 				exec_threads = Pool(processes = alloc_processes)
 			except Exception as e:
-				log(stderr, ERR, "unable to start threads", code = 200)
-				log(stderr, INF, e)
+				send(stderr, ERR, "unable to start threads", code = 200)
+				send(stderr, INF, e)
 				sys.exit(1)
-			log(stdout, INF, "successfully initialized " + str(alloc_processes) + " threads")
+			send(stdout, INF, "successfully initialized " + str(alloc_processes) + " threads")
 
 			exit_flag = False
 
 			try:
 				apikey = config["key"]["database"]
 			except:
-				log(stderr, ERR, "database key field in config must be present", code = 111)
+				send(stderr, ERR, "database key field in config must be present", code = 111)
 				exit_flag = True
 			try:
 				tbakey = config["key"]["tba"]
 			except:
-				log(stderr, ERR, "tba key field in config must be present", code = 112)
+				send(stderr, ERR, "tba key field in config must be present", code = 112)
 				exit_flag = True
 
 			if apikey == None or apikey == "":
-				log(stderr, ERR, "database key field in config must not be empty, please populate the database key")
+				send(stderr, ERR, "database key field in config must not be empty, please populate the database key")
 				exit_flag = True
 			if tbakey == None or tbakey == "":
-				log(stderr, ERR, "tba key field in config must not be empty, please populate the tba key")
+				send(stderr, ERR, "tba key field in config must not be empty, please populate the tba key")
 				exit_flag = True
 
 			if exit_flag:
 				sys.exit(1)
 			
-			log(stdout, INF, "found and loaded database and tba keys")
+			send(stdout, INF, "found and loaded database and tba keys")
 
 			client = pymongo.MongoClient(apikey)
 
 			previous_time = get_previous_time(client)
-			log(stdout, INF, "analysis backtimed to: " + str(previous_time))
+			send(stdout, INF, "analysis backtimed to: " + str(previous_time))
 
 			start = time.time()
-			log(stdout, INF, "loading match data")
+			send(stdout, INF, "loading match data")
 			match_data = load_match(client, competition)
-			log(stdout, INF, "finished loading match data in " + str(time.time() - start) + " seconds")
+			send(stdout, INF, "finished loading match data in " + str(time.time() - start) + " seconds")
 
 			start = time.time()
-			log(stdout, INF, "performing analysis on match data")
+			send(stdout, INF, "performing analysis on match data")
 			results = matchloop(client, competition, match_data, match_tests, exec_threads)
-			log(stdout, INF, "finished match analysis in " + str(time.time() - start) + " seconds")
+			send(stdout, INF, "finished match analysis in " + str(time.time() - start) + " seconds")
 
 			start = time.time()
-			log(stdout, INF, "uploading match results to database")
+			send(stdout, INF, "uploading match results to database")
 			push_match(client, competition, results)
-			log(stdout, INF, "finished uploading match results in " + str(time.time() - start) + " seconds")
+			send(stdout, INF, "finished uploading match results in " + str(time.time() - start) + " seconds")
 
 			start = time.time()
-			log(stdout, INF, "performing analysis on team metrics")
+			send(stdout, INF, "performing analysis on team metrics")
 			results = metricloop(tbakey, client, competition, current_time, metrics_tests)
-			log(stdout, INF, "finished metric analysis and pushed to database in " + str(time.time() - start) + " seconds")
+			send(stdout, INF, "finished metric analysis and pushed to database in " + str(time.time() - start) + " seconds")
 
 			start = time.time()
-			log(stdout, INF, "loading pit data")
+			send(stdout, INF, "loading pit data")
 			pit_data = load_pit(client, competition)
-			log(stdout, INF, "finished loading pit data in " + str(time.time() - start) + " seconds")
+			send(stdout, INF, "finished loading pit data in " + str(time.time() - start) + " seconds")
 
 			start = time.time()
-			log(stdout, INF, "performing analysis on pit data")
+			send(stdout, INF, "performing analysis on pit data")
 			results = pitloop(client, competition, pit_data, pit_tests)
-			log(stdout, INF, "finished pit analysis in " + str(time.time() - start) + " seconds")
+			send(stdout, INF, "finished pit analysis in " + str(time.time() - start) + " seconds")
 
 			start = time.time()
-			log(stdout, INF, "uploading pit results to database")
+			send(stdout, INF, "uploading pit results to database")
 			push_pit(client, competition, results)
-			log(stdout, INF, "finished uploading pit results in " + str(time.time() - start) + " seconds")
+			send(stdout, INF, "finished uploading pit results in " + str(time.time() - start) + " seconds")
+
+			client.close()
 
 			set_current_time(client, current_time)
-			log(stdout, INF, "finished all tests in " + str(time.time() - loop_start) + " seconds, looping")
+			send(stdout, INF, "finished all tests in " + str(time.time() - loop_start) + " seconds, looping")
 
 		except KeyboardInterrupt:
-			log(stdout, INF, "detected KeyboardInterrupt, killing threads")
+			send(stdout, INF, "detected KeyboardInterrupt, killing threads")
 			if "exec_threads" in locals():
 				exec_threads.terminate()
 				exec_threads.join()
 				exec_threads.close()
-			log(stdout, INF, "terminated threads, exiting")
+			send(stdout, INF, "terminated threads, exiting")
 			loop_stored_exception = sys.exc_info()
 			loop_exit_code = 0
 			break
 		except Exception as e:
-			log(stderr, ERR, "encountered an exception while running")
+			send(stderr, ERR, "encountered an exception while running")
 			print(e, file = stderr)
 			loop_exit_code = 1
 			break
@@ -601,10 +402,8 @@ def load_config(path, config_vector):
 		f = open(path, "r")
 		config_vector.update(json.load(f))
 		f.close()
-		#socket.send("found and opened config at <" + path + ">")
 		return 0
 	except:
-		#log(stderr, ERR, "could not find config at <" + path + ">, generating blank config and exiting", code = 100)
 		f = open(path, "w")
 		f.write(sample_json)
 		f.close()
@@ -619,8 +418,50 @@ def save_config(path, config_vector):
 	except:
 		return 1
 
-def start(pid_path):
-	main_lin(pid_path)
+def start(pid_path, verbose = False):
+
+	if not verbose:
+
+		f = open('errorlog.txt', 'w+')
+		with daemon.DaemonContext(
+			working_directory=os.getcwd(),
+			pidfile=pidfile.TimeoutPIDLockFile(pid_path),
+			stderr=f
+			):
+
+			async def handler(client, path):
+				clients.append(client)
+				while True:
+					try:
+						pong_waiter = await client.ping()
+						await pong_waiter
+						time.sleep(3)
+					except Exception as e:
+						clients.remove(client)
+						break
+
+			async def send_one(client, data):
+				await client.send(data)
+				
+			def send(target, level, message, code = 0):
+				message_clients = clients.copy()
+				for client in message_clients:
+					try:
+						asyncio.run(send_one(client, message))
+					except:
+						pass
+
+			clients = []
+			start_server = websockets.serve(handler, "0.0.0.0", 5678)
+
+			asyncio.get_event_loop().run_until_complete(start_server)
+			threading.Thread(target = asyncio.get_event_loop().run_forever).start()
+
+			main(send)
+	
+	else:
+
+		main(log, verbose=verbose)
 
 def stop(pid_path):
 	try:
@@ -652,7 +493,7 @@ if __name__ == "__main__":
 
 	if sys.platform.startswith("win"):
 		freeze_support()
-		main_win()
+		start(None, verbose = True)
 
 	else:
 		import daemon
@@ -667,7 +508,7 @@ if __name__ == "__main__":
 			elif 'restart' == sys.argv[1]:
 				restart(pid_path)
 			elif 'verbose' == sys.argv[1]:
-				main_win()
+				start(None, verbose = True)
 			else:
 				print("usage: %s start|stop|restart|verbose" % sys.argv[0])
 				sys.exit(2)
