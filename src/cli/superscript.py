@@ -11,6 +11,7 @@ __changelog__ = """changelog:
 		- superscript now runs in PEP 3143 compliant well behaved daemon on Linux systems
 		- linux superscript daemon has integrated websocket output to monitor progress/status remotely
 		- linux daemon now sends stderr to errorlog.txt
+		- added verbose option to linux superscript to allow for interactive output
 	0.9.3:
 		- improved data loading performance by removing redundant PyMongo client creation (120s to 14s)
 		- passed singular instance of PyMongo client as standin for apikey parameter in all data.py functions
@@ -637,10 +638,12 @@ if __name__ == "__main__":
 				stop(pid_path)
 			elif 'restart' == sys.argv[1]:
 				restart(pid_path)
+			elif 'verbose' == sys.argv[1]:
+				main_win()
 			else:
-				print("usage: %s start|stop|restart|profile" % sys.argv[0])
+				print("usage: %s start|stop|restart|verbose" % sys.argv[0])
 				sys.exit(2)
 			sys.exit(0)
 		else:
-			print("usage: %s start|stop|restart|profile" % sys.argv[0])
+			print("usage: %s start|stop|restart|verbose" % sys.argv[0])
 			sys.exit(2)
