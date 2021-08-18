@@ -225,7 +225,7 @@ def main_lin(pid_path):
 					break
 
 		clients = []
-		start_server = websockets.serve(handler, "127.0.0.1", 5678)
+		start_server = websockets.serve(handler, "0.0.0.0", 5678)
 
 		asyncio.get_event_loop().run_until_complete(start_server)
 		threading.Thread(target = asyncio.get_event_loop().run_forever).start()
