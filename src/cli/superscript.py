@@ -12,6 +12,7 @@ __changelog__ = """changelog:
 		- linux superscript daemon has integrated websocket output to monitor progress/status remotely
 		- linux daemon now sends stderr to errorlog.txt
 		- added verbose option to linux superscript to allow for interactive output
+		- moved pymongo import to superscript.py
 	0.9.3:
 		- improved data loading performance by removing redundant PyMongo client creation (120s to 14s)
 		- passed singular instance of PyMongo client as standin for apikey parameter in all data.py functions
