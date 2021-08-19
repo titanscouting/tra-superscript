@@ -208,15 +208,13 @@ sample_json = """{
 
 def main(send, verbose = False, profile = False):
 
-	if verbose or profile:
+	warnings.filterwarnings("ignore")
+	sys.stderr = open("errorlog.txt", "w")
+	loop_exit_code = 0
+	loop_stored_exception = None
 
-		warnings.filterwarnings("ignore")
-		sys.stderr = open("errorlog.txt", "w")
-
+	if verbose:
 		splash(__version__)
-
-		loop_exit_code = 0
-		loop_stored_exception = None
 
 	while True:
 
