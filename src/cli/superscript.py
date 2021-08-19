@@ -13,6 +13,7 @@ __changelog__ = """changelog:
 		- linux daemon now sends stderr to errorlog.txt
 		- added verbose option to linux superscript to allow for interactive output
 		- moved pymongo import to superscript.py
+		- added profile option to linux superscript to profile runtime of script
 	0.9.3:
 		- improved data loading performance by removing redundant PyMongo client creation (120s to 14s)
 		- passed singular instance of PyMongo client as standin for apikey parameter in all data.py functions
@@ -205,9 +206,9 @@ sample_json = """{
 	}
 }"""
 
-def main(send, verbose = False):
+def main(send, verbose = False, profile = False):
 
-	if verbose :
+	if verbose or profile:
 
 		warnings.filterwarnings("ignore")
 		sys.stderr = open("errorlog.txt", "w")
@@ -395,6 +396,9 @@ def main(send, verbose = False):
 			loop_exit_code = 1
 			break
 
+		if profile:
+			return
+
 	sys.exit(loop_exit_code)
 
 def load_config(path, config_vector):
@@ -418,9 +422,27 @@ def save_config(path, config_vector):
 	except:
 		return 1
 
-def start(pid_path, verbose = False):
+def start(pid_path, verbose = False, profile = False):
 
-	if not verbose:
+	if profile:
+
+		def send(target, level, message, code = 0):
+			pass
+
+		import cProfile, pstats, io
+		profile = cProfile.Profile()
+		profile.enable()
+		main(send, profile = True)
+		profile.disable()
+		f = open("profile.txt", 'w+')
+		ps = pstats.Stats(profile, stream = f).sort_stats('cumtime')
+		ps.print_stats()
+
+	elif verbose:
+
+		main(log, verbose = verbose)
+
+	else:
 
 		f = open('errorlog.txt', 'w+')
 		with daemon.DaemonContext(
@@ -457,11 +479,7 @@ def start(pid_path, verbose = False):
 			asyncio.get_event_loop().run_until_complete(start_server)
 			threading.Thread(target = asyncio.get_event_loop().run_forever).start()
 
-			main(send)
-	
-	else:
-
-		main(log, verbose=verbose)
+			main(send)	
 
 def stop(pid_path):
 	try:
@@ -509,10 +527,12 @@ if __name__ == "__main__":
 				restart(pid_path)
 			elif 'verbose' == sys.argv[1]:
 				start(None, verbose = True)
+			elif 'profile' == sys.argv[1]:
+				start(None, profile=True)
 			else:
-				print("usage: %s start|stop|restart|verbose" % sys.argv[0])
+				print("usage: %s start|stop|restart|verbose|profile" % sys.argv[0])
 				sys.exit(2)
 			sys.exit(0)
 		else:
-			print("usage: %s start|stop|restart|verbose" % sys.argv[0])
+			print("usage: %s start|stop|restart|verbose|profile" % sys.argv[0])
 			sys.exit(2)
