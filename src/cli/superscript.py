@@ -142,20 +142,20 @@ __all__ = [
 
 # imports:
 
+import asyncio
 import json
-import os
 import math
 from multiprocessing import Pool, freeze_support
+import os
+import pymongo
+import sys
+import threading
 import time
 import warnings
-import sys
-import asyncio
 import websockets
-import pymongo
-import threading
 
 from interface import splash, log, ERR, INF, stdout, stderr
-from data import get_previous_time, set_current_time, load_match, push_match, load_metric, push_metric, load_pit, push_pit
+from data import get_previous_time, set_current_time, load_match, push_match, load_pit, push_pit
 from processing import matchloop, metricloop, pitloop
 
 config_path = "config.json"
