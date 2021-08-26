@@ -2,7 +2,6 @@
 
 block_cipher = None
 
-
 a = Analysis(['superscript.py'],
              pathex=['/workspaces/tra-data-analysis/src'],
              binaries=[],
@@ -11,6 +10,8 @@ a = Analysis(['superscript.py'],
                  "dnspython", 
                  "sklearn.utils._weight_vector",
                  "requests",
+                 "websockets.legacy",
+                 "websockets.legacy.server",
              ],
              hookspath=[],
              runtime_hooks=[],
