@@ -9,6 +9,10 @@
 **/tra_analysis/
 **/temp/*
 
+**/*.pid
+
+**/profile.*
+
 **/errorlog.txt
 /dist/superscript.*
 /dist/superscript
