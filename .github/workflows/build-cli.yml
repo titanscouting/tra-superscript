@@ -18,8 +18,8 @@ jobs:
         run: pip install -r requirements.txt
         working-directory: src/
       - name: Give Execute Permission
-        run: chmod +x build/build-CLI.sh
+        run: chmod +x build-CLI.sh
         working-directory: build/
       - name: Build Binary
-        run: ./build-CLI.sh
+        run: ./build-CLI.sh5
         working-directory: build/
