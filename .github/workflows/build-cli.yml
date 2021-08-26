@@ -11,9 +11,15 @@ jobs:
   generate:
     name: Build Linux
     runs-on: ubuntu-latest
-
     steps: 
       - name: Checkout master
         uses: actions/checkout@master
-      - name: Echo test
-        run: echo "test"
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+        working-directory: src/
+      - name: Give Execute Permission
+        run: chmod +x build/build-CLI.sh
+        working-directory: build/
+      - name: Build Binary
+        run: ./build-CLI.sh
+        working-directory: build/
