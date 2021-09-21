@@ -401,7 +401,7 @@ def main(send, verbose = False, profile = False, debug = False):
 			loop_exit_code = 0
 			break
 		except Exception as e:
-			send(stderr, ERR, "encountered an exception while running")
+			send(stderr, ERR, "encountered an exception while running", code = 1)
 			print(e, file = stderr)
 			loop_exit_code = 1
 			break
@@ -546,9 +546,9 @@ if __name__ == "__main__":
 			elif 'debug' == sys.argv[1]:
 				start(None, debug = True)
 			else:
-				print("usage: %s start|stop|restart|verbose|profile" % sys.argv[0])
+				print("usage: %s start|stop|restart|verbose|profile|debug" % sys.argv[0])
 				sys.exit(2)
 			sys.exit(0)
 		else:
-			print("usage: %s start|stop|restart|verbose|profile" % sys.argv[0])
+			print("usage: %s start|stop|restart|verbose|profile|debug" % sys.argv[0])
 			sys.exit(2)
