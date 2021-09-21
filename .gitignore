@@ -13,6 +13,7 @@
 
 **/profile.*
 
+**/*.log
 **/errorlog.txt
 /dist/superscript.*
 /dist/superscript
