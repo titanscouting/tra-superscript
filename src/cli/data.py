@@ -114,13 +114,13 @@ def unkeyify_2l(layered_dict):
 		out[i] = list(map(lambda x: x[1], add))
 	return out
 
-def get_previous_time(apikey):
+def get_previous_time(client):
 
-	previous_time = get_analysis_flags(apikey, "latest_update")
+	previous_time = get_analysis_flags(client, "latest_update")
 
 	if previous_time == None:
 
-		set_analysis_flags(apikey, "latest_update", 0)
+		set_analysis_flags(client, "latest_update", 0)
 		previous_time = 0
 
 	else:
@@ -129,21 +129,29 @@ def get_previous_time(apikey):
 
 	return previous_time
 
-def set_current_time(apikey, current_time):
+def set_current_time(client, current_time):
 
-	set_analysis_flags(apikey, "latest_update", {"latest_update":current_time})
+	set_analysis_flags(client, "latest_update", {"latest_update":current_time})
 
-def load_match(apikey, competition):
+def get_database_config(client):
 
-	return get_match_data_formatted(apikey, competition)
+	return get_analysis_flags(client, "config")["config"]
 
-def load_metric(apikey, competition, match, group_name, metrics):
+def set_database_config(client, config):
+
+	set_analysis_flags(client, "config", {"config": config})
+
+def load_match(client, competition):
+
+	return get_match_data_formatted(client, competition)
+
+def load_metric(client, competition, match, group_name, metrics):
 
 	group = {}
 
 	for team in match[group_name]:
 
-		db_data = get_team_metrics_data(apikey, competition, team)
+		db_data = get_team_metrics_data(client, competition, team)
 
 		if db_data == None:
 
@@ -165,24 +173,24 @@ def load_metric(apikey, competition, match, group_name, metrics):
 
 	return group
 
-def load_pit(apikey, competition):
+def load_pit(client, competition):
 
-	return get_pit_data_formatted(apikey, competition)
+	return get_pit_data_formatted(client, competition)
 
-def push_match(apikey, competition, results):
+def push_match(client, competition, results):
 
 	for team in results:
 
-		push_team_tests_data(apikey, competition, team, results[team])
+		push_team_tests_data(client, competition, team, results[team])
 
-def push_metric(apikey, competition, metric):
+def push_metric(client, competition, metric):
 
 	for team in metric:
 
-		push_team_metrics_data(apikey, competition, team, metric[team])
+		push_team_metrics_data(client, competition, team, metric[team])
 
-def push_pit(apikey, competition, pit):
+def push_pit(client, competition, pit):
 
 	for variable in pit:
 
-		push_team_pit_data(apikey, competition, variable, pit[variable])
+		push_team_pit_data(client, competition, variable, pit[variable])
