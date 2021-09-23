@@ -10,10 +10,12 @@ __changelog__ = """changelog:
 	1.0.0:
 		- superscript now runs in PEP 3143 compliant well behaved daemon on Linux systems
 		- linux superscript daemon has integrated websocket output to monitor progress/status remotely
-		- linux daemon now sends stderr to errorlog.txt
+		- linux daemon now sends stderr to errorlog.log
 		- added verbose option to linux superscript to allow for interactive output
 		- moved pymongo import to superscript.py
 		- added profile option to linux superscript to profile runtime of script
+		- reduced memory usage slightly by consolidating the unwrapped input data
+		- added debug option, which performs one loop of analysis and dumps results to local files
 		- added event and time delay options to config
 			- event delay pauses loop until even listener recieves an update
 			- time delay pauses loop until the time specified has elapsed since the BEGINNING of previous loop
@@ -211,10 +213,10 @@ sample_json = """{
 	"loop-delay":60
 }"""
 
-def main(send, verbose = False, profile = False):
+def main(send, verbose = False, profile = False, debug = False):
 
 	warnings.filterwarnings("ignore")
-	sys.stderr = open("errorlog.txt", "w")
+	sys.stderr = open("errorlog.log", "w")
 	loop_exit_code = 0
 	loop_stored_exception = None
 
@@ -353,6 +355,11 @@ def main(send, verbose = False, profile = False):
 			results = matchloop(client, competition, match_data, match_tests, exec_threads)
 			send(stdout, INF, "finished match analysis in " + str(time.time() - start) + " seconds")
 
+			if debug:
+				f = open("matchloop.log", "w+")
+				json.dump(results, f)
+				f.close()
+
 			start = time.time()
 			send(stdout, INF, "uploading match results to database")
 			push_match(client, competition, results)
@@ -372,6 +379,11 @@ def main(send, verbose = False, profile = False):
 			send(stdout, INF, "performing analysis on pit data")
 			results = pitloop(client, competition, pit_data, pit_tests)
 			send(stdout, INF, "finished pit analysis in " + str(time.time() - start) + " seconds")
+
+			if debug:
+				f = open("pitloop.log", "w+")
+				json.dump(results, f)
+				f.close()
 
 			start = time.time()
 			send(stdout, INF, "uploading pit results to database")
@@ -400,7 +412,7 @@ def main(send, verbose = False, profile = False):
 			loop_exit_code = 0
 			break
 		except Exception as e:
-			send(stderr, ERR, "encountered an exception while running")
+			send(stderr, ERR, "encountered an exception while running", code = 1)
 			print(e, file = stderr)
 			loop_exit_code = 1
 			break
@@ -431,7 +443,7 @@ def save_config(path, config_vector):
 	except:
 		return 1
 
-def start(pid_path, verbose = False, profile = False):
+def start(pid_path, verbose = False, profile = False, debug = False):
 
 	if profile:
 
@@ -450,6 +462,10 @@ def start(pid_path, verbose = False, profile = False):
 	elif verbose:
 
 		main(log, verbose = verbose)
+
+	elif debug:
+
+		main(log, verbose = True, profile = True, debug = debug)
 
 	else:
 
@@ -538,10 +554,12 @@ if __name__ == "__main__":
 				start(None, verbose = True)
 			elif 'profile' == sys.argv[1]:
 				start(None, profile=True)
+			elif 'debug' == sys.argv[1]:
+				start(None, debug = True)
 			else:
-				print("usage: %s start|stop|restart|verbose|profile" % sys.argv[0])
+				print("usage: %s start|stop|restart|verbose|profile|debug" % sys.argv[0])
 				sys.exit(2)
 			sys.exit(0)
 		else:
-			print("usage: %s start|stop|restart|verbose|profile" % sys.argv[0])
+			print("usage: %s start|stop|restart|verbose|profile|debug" % sys.argv[0])
 			sys.exit(2)
