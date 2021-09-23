@@ -16,6 +16,9 @@ __changelog__ = """changelog:
 		- added profile option to linux superscript to profile runtime of script
 		- reduced memory usage slightly by consolidating the unwrapped input data
 		- added debug option, which performs one loop of analysis and dumps results to local files
+		- added event and time delay options to config
+			- event delay pauses loop until even listener recieves an update
+			- time delay pauses loop until the time specified has elapsed since the BEGINNING of previous loop
 	0.9.3:
 		- improved data loading performance by removing redundant PyMongo client creation (120s to 14s)
 		- passed singular instance of PyMongo client as standin for apikey parameter in all data.py functions
@@ -205,7 +208,9 @@ sample_json = """{
 			"climb-mechanism":true,
 			"attitude":true
 		}
-	}
+	},
+	"even-delay":false,
+	"loop-delay":60
 }"""
 
 def main(send, verbose = False, profile = False, debug = False):
@@ -389,6 +394,12 @@ def main(send, verbose = False, profile = False, debug = False):
 
 			set_current_time(client, current_time)
 			send(stdout, INF, "finished all tests in " + str(time.time() - loop_start) + " seconds, looping")
+
+			loop_delay = float(config["loop-delay"])
+			remaining_time = loop_delay - (time.time() - loop_start)
+			if remaining_time > 0:
+				send(stdout, INF, "loop delayed by " + str(remaining_time) + " seconds")
+				time.sleep(remaining_time)
 
 		except KeyboardInterrupt:
 			send(stdout, INF, "detected KeyboardInterrupt, killing threads")
