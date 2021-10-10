@@ -158,7 +158,7 @@ import warnings
 import websockets
 
 from interface import splash, log, ERR, INF, stdout, stderr
-from data import get_previous_time, set_current_time, load_match, push_match, load_pit, push_pit
+from data import get_previous_time, set_current_time, load_match, push_match, load_pit, push_pit, check_new_database_matches
 from processing import matchloop, metricloop, pitloop
 
 config_path = "config.json"
@@ -207,7 +207,7 @@ sample_json = """{
 			"attitude":true
 		}
 	},
-	"even-delay":false,
+	"event-delay":false,
 	"loop-delay":60
 }"""
 
@@ -383,11 +383,20 @@ def main(send, verbose = False, profile = False):
 			set_current_time(client, current_time)
 			send(stdout, INF, "finished all tests in " + str(time.time() - loop_start) + " seconds, looping")
 
-			loop_delay = float(config["loop-delay"])
-			remaining_time = loop_delay - (time.time() - loop_start)
-			if remaining_time > 0:
-				send(stdout, INF, "loop delayed by " + str(remaining_time) + " seconds")
-				time.sleep(remaining_time)
+			event_delay = config["event-delay"]
+			if event_delay:
+				send(stdout, INF, "loop delayed until database returns new matches")
+				new_match = False
+				while not new_match:
+					time.sleep(1)
+					new_match = check_new_database_matches(client, competition)
+				send(stdout, INF, "database returned new matches")
+			else:
+				loop_delay = float(config["loop-delay"])
+				remaining_time = loop_delay - (time.time() - loop_start)
+				if remaining_time > 0:
+					send(stdout, INF, "loop delayed by " + str(remaining_time) + " seconds")
+					time.sleep(remaining_time)
 
 		except KeyboardInterrupt:
 			send(stdout, INF, "detected KeyboardInterrupt, killing threads")
