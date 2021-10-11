@@ -10,13 +10,19 @@ __changelog__ = """changelog:
 	1.0.0:
 		- superscript now runs in PEP 3143 compliant well behaved daemon on Linux systems
 		- linux superscript daemon has integrated websocket output to monitor progress/status remotely
-		- linux daemon now sends stderr to errorlog.txt
+		- linux daemon now sends stderr to errorlog.log
 		- added verbose option to linux superscript to allow for interactive output
 		- moved pymongo import to superscript.py
 		- added profile option to linux superscript to profile runtime of script
+		- reduced memory usage slightly by consolidating the unwrapped input data
+		- added debug option, which performs one loop of analysis and dumps results to local files
 		- added event and time delay options to config
 			- event delay pauses loop until even listener recieves an update
 			- time delay pauses loop until the time specified has elapsed since the BEGINNING of previous loop
+		- added options to pull config information from database (reatins option to use local config file)
+			- config-preference option selects between prioritizing local config and prioritizing database config
+			- synchronize-config option selects whether to update the non prioritized config with the prioritized one
+			- divided config options between persistent ones (keys), and variable ones (everything else)
 	0.9.3:
 		- improved data loading performance by removing redundant PyMongo client creation (120s to 14s)
 		- passed singular instance of PyMongo client as standin for apikey parameter in all data.py functions
@@ -158,65 +164,77 @@ import warnings
 import websockets
 
 from interface import splash, log, ERR, INF, stdout, stderr
-from data import get_previous_time, set_current_time, load_match, push_match, load_pit, push_pit, check_new_database_matches
+from data import get_previous_time, pull_new_tba_matches, set_current_time, load_match, push_match, load_pit, push_pit, get_database_config, set_database_config, check_new_database_matches
 from processing import matchloop, metricloop, pitloop
 
 config_path = "config.json"
 sample_json = """{
-	"max-threads": 0.5,
-	"team": "",
-	"competition": "2020ilch",
-	"key":{
-		"database":"",
-		"tba":""
+	"persistent":{
+		"key":{
+			"database":"",
+			"tba":""
+		},
+		"config-preference":"local",
+		"synchronize-config":false
 	},
-	"statistics":{
-		"match":{
-			"balls-blocked":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-			"balls-collected":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-			"balls-lower-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-			"balls-lower-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-			"balls-started":["basic_stats","historical_analyss","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-			"balls-upper-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-			"balls-upper-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"]
+	"variable":{
+		"max-threads":0.5,
+		"team":"",
+		"competition": "2020ilch",
+		"statistics":{
+			"match":{
+				"balls-blocked":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+				"balls-collected":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+				"balls-lower-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+				"balls-lower-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+				"balls-started":["basic_stats","historical_analyss","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+				"balls-upper-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+				"balls-upper-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"]
 
-		},
-		"metric":{
-			"elo":{
-				"score":1500,
-				"N":400,
-				"K":24
 			},
-			"gl2":{
-				"score":1500,
-				"rd":250,
-				"vol":0.06
+			"metric":{
+				"elo":{
+					"score":1500,
+					"N":400,
+					"K":24
+				},
+				"gl2":{
+					"score":1500,
+					"rd":250,
+					"vol":0.06
+				},
+				"ts":{
+					"mu":25,
+					"sigma":8.33
+				}
 			},
-			"ts":{
-				"mu":25,
-				"sigma":8.33
-			}
-		},
-		"pit":{
-			"wheel-mechanism":true,
-			"low-balls":true,
-			"high-balls":true,
-			"wheel-success":true,
-			"strategic-focus":true,
-			"climb-mechanism":true,
-			"attitude":true
+			"pit":{
+				"wheel-mechanism":true,
+				"low-balls":true,
+				"high-balls":true,
+				"wheel-success":true,
+				"strategic-focus":true,
+				"climb-mechanism":true,
+				"attitude":true
+			},
+      "event-delay":false,
+	    "loop-delay":60
 		}
-	},
-	"event-delay":false,
-	"loop-delay":60
 }"""
 
-def main(send, verbose = False, profile = False):
+def main(send, verbose = False, profile = False, debug = False):
+
+	def close_all():
+		if "exec_threads" in locals():
+			exec_threads.terminate()
+			exec_threads.join()
+			exec_threads.close()
+		if "client" in locals():
+			client.close()
 
 	warnings.filterwarnings("ignore")
-	sys.stderr = open("errorlog.txt", "w")
-	loop_exit_code = 0
-	loop_stored_exception = None
+	sys.stderr = open("errorlog.log", "w")
+	exit_code = 0
 
 	if verbose:
 		splash(__version__)
@@ -227,161 +245,74 @@ def main(send, verbose = False, profile = False):
 
 			loop_start = time.time()
 
-			current_time = time.time()
-			send(stdout, INF, "current time: " + str(current_time))
-
-			send(stdout, INF, "loading config at <" + config_path + ">", code = 0)
+			send(stdout, INF, "current time: " + str(loop_start))
 
 			config = {}
-			if load_config(config_path, config) == 1:
+
+			if load_config(config_path, config):
 				send(stderr, ERR, "could not find config at <" + config_path + ">, generating blank config and exiting", code = 100)
-				sys.exit(1)
-
-			send(stdout, INF, "found and opened config at <" + config_path + ">", code = 0)
-
-			error_flag = False
-
-			try:
-				competition = config["competition"]
-			except:
-				send(stderr, ERR, "could not find competition field in config", code = 101)
-				error_flag = True
-			try:
-				match_tests = config["statistics"]["match"]
-			except:
-				send(stderr, ERR, "could not find match_tests field in config", code = 102)
-				error_flag = True
-			try:
-				metrics_tests = config["statistics"]["metric"]
-			except:
-				send(stderr, ERR, "could not find metrics_tests field in config", code = 103)
-				error_flag = True
-			try:
-				pit_tests = config["statistics"]["pit"]
-			except:
-				send(stderr, ERR, "could not find pit_tests field in config", code = 104)
-				error_flag = True
+				exit_code = 1
+				break
 			
-			if error_flag:
-				sys.exit(1)
-			error_flag = False
+			send(stdout, INF, "found and loaded config at <" + config_path + ">")
 
-			if competition == None or competition == "":
-				send(stderr, ERR, "competition field in config must not be empty", code = 105)
-				error_flag = True
-			if match_tests == None:
-				send(stderr, ERR, "match_tests field in config must not be empty", code = 106)
-				error_flag = True
-			if metrics_tests == None:
-				send(stderr, ERR, "metrics_tests field in config must not be empty", code = 107)
-				error_flag = True
-			if pit_tests == None:
-				send(stderr, ERR, "pit_tests field in config must not be empty", code = 108)
-				error_flag = True
-			
-			if error_flag:
-				sys.exit(1)
-
-			send(stdout, INF, "found and loaded competition, match_tests, metrics_tests, pit_tests from config")
-
-			sys_max_threads = os.cpu_count()
-			try:
-				cfg_max_threads = config["max-threads"]
-			except:
-				send(stderr, ERR, "max-threads field in config must not be empty, refer to documentation for configuration options", code = 109)
-				sys.exit(1)
-
-			if cfg_max_threads > -sys_max_threads and cfg_max_threads < 0 :
-				alloc_processes = sys_max_threads + cfg_max_threads
-			elif cfg_max_threads > 0 and cfg_max_threads < 1:
-				alloc_processes = math.floor(cfg_max_threads * sys_max_threads)
-			elif cfg_max_threads > 1 and cfg_max_threads <= sys_max_threads:
-				alloc_processes = cfg_max_threads
-			elif cfg_max_threads == 0:
-				alloc_processes = sys_max_threads
-			else:
-				send(stderr, ERR, "max-threads must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads) + ", but got " + cfg_max_threads, code = 110)
-				sys.exit(1)
-
-			send(stdout, INF, "found and loaded max-threads from config")
-			send(stdout, INF, "attempting to start " + str(alloc_processes) + " threads")
-			try:
-				exec_threads = Pool(processes = alloc_processes)
-			except Exception as e:
-				send(stderr, ERR, "unable to start threads", code = 200)
-				send(stderr, INF, e)
-				sys.exit(1)
-			send(stdout, INF, "successfully initialized " + str(alloc_processes) + " threads")
-
-			exit_flag = False
-
-			try:
-				apikey = config["key"]["database"]
-			except:
-				send(stderr, ERR, "database key field in config must be present", code = 111)
-				exit_flag = True
-			try:
-				tbakey = config["key"]["tba"]
-			except:
-				send(stderr, ERR, "tba key field in config must be present", code = 112)
-				exit_flag = True
-
-			if apikey == None or apikey == "":
-				send(stderr, ERR, "database key field in config must not be empty, please populate the database key")
-				exit_flag = True
-			if tbakey == None or tbakey == "":
-				send(stderr, ERR, "tba key field in config must not be empty, please populate the tba key")
-				exit_flag = True
-
-			if exit_flag:
-				sys.exit(1)
-			
+			flag, apikey, tbakey, preference, sync = parse_config_persistent(send, config)
+			if flag:
+				exit_code = 1
+				break
 			send(stdout, INF, "found and loaded database and tba keys")
 
 			client = pymongo.MongoClient(apikey)
 
-			previous_time = get_previous_time(client)
-			send(stdout, INF, "analysis backtimed to: " + str(previous_time))
+			send(stdout, INF, "established connection to database")
+			send(stdout, INF, "analysis backtimed to: " + str(get_previous_time(client)))
+
+			resolve_config_conflicts(send, client, config, preference, sync)
+			if config == 1:
+				exit_code = 1
+				break
+			flag, exec_threads, competition, match_tests, metrics_tests, pit_tests = parse_config_variable(send, config)
+			if flag:
+				exit_code = 1
+				break
 
 			start = time.time()
-			send(stdout, INF, "loading match data")
+			send(stdout, INF, "loading match, metric, pit data (this may take a few seconds)")
 			match_data = load_match(client, competition)
-			send(stdout, INF, "finished loading match data in " + str(time.time() - start) + " seconds")
-
-			start = time.time()
-			send(stdout, INF, "performing analysis on match data")
-			results = matchloop(client, competition, match_data, match_tests, exec_threads)
-			send(stdout, INF, "finished match analysis in " + str(time.time() - start) + " seconds")
-
-			start = time.time()
-			send(stdout, INF, "uploading match results to database")
-			push_match(client, competition, results)
-			send(stdout, INF, "finished uploading match results in " + str(time.time() - start) + " seconds")
-
-			start = time.time()
-			send(stdout, INF, "performing analysis on team metrics")
-			results = metricloop(tbakey, client, competition, current_time, metrics_tests)
-			send(stdout, INF, "finished metric analysis and pushed to database in " + str(time.time() - start) + " seconds")
-
-			start = time.time()
-			send(stdout, INF, "loading pit data")
+			metrics_data = pull_new_tba_matches(tbakey, competition, loop_start)
 			pit_data = load_pit(client, competition)
-			send(stdout, INF, "finished loading pit data in " + str(time.time() - start) + " seconds")
+			send(stdout, INF, "finished loading match, metric, pit data in "+ str(time.time() - start) + " seconds")
 
 			start = time.time()
-			send(stdout, INF, "performing analysis on pit data")
-			results = pitloop(client, competition, pit_data, pit_tests)
-			send(stdout, INF, "finished pit analysis in " + str(time.time() - start) + " seconds")
+			send(stdout, INF, "performing analysis on match, metrics, pit data")
+			match_results = matchloop(client, competition, match_data, match_tests, exec_threads)
+			metrics_results = metricloop(client, competition, metrics_data, metrics_tests)
+			pit_results = pitloop(client, competition, pit_data, pit_tests)
+			send(stdout, INF, "finished analysis in " + str(time.time() - start) + " seconds")
 
 			start = time.time()
-			send(stdout, INF, "uploading pit results to database")
-			push_pit(client, competition, results)
-			send(stdout, INF, "finished uploading pit results in " + str(time.time() - start) + " seconds")
+			send(stdout, INF, "uploading match, metrics, pit results to database")
+			push_match(client, competition, match_results)
+			push_pit(client, competition, pit_results)
+			send(stdout, INF, "finished uploading results in " + str(time.time() - start) + " seconds")
 
-			client.close()
+			if debug:
+				f = open("matchloop.log", "w+")
+				json.dump(match_results, f, ensure_ascii=False, indent=4)
+				f.close()
 
-			set_current_time(client, current_time)
-			send(stdout, INF, "finished all tests in " + str(time.time() - loop_start) + " seconds, looping")
+				f = open("pitloop.log", "w+")
+				json.dump(pit_results, f, ensure_ascii=False, indent=4)
+				f.close()
+
+			set_current_time(client, loop_start)
+			close_all()
+
+			send(stdout, INF, "closed threads and database client")
+			send(stdout, INF, "finished all tasks in " + str(time.time() - loop_start) + " seconds, looping")
+
+			if profile:
+				return # return instead of break to avoid sys.exit
 
 			event_delay = config["event-delay"]
 			if event_delay:
@@ -400,24 +331,165 @@ def main(send, verbose = False, profile = False):
 
 		except KeyboardInterrupt:
 			send(stdout, INF, "detected KeyboardInterrupt, killing threads")
-			if "exec_threads" in locals():
-				exec_threads.terminate()
-				exec_threads.join()
-				exec_threads.close()
+			close_all()
 			send(stdout, INF, "terminated threads, exiting")
-			loop_stored_exception = sys.exc_info()
 			loop_exit_code = 0
 			break
+
 		except Exception as e:
-			send(stderr, ERR, "encountered an exception while running")
+			send(stderr, ERR, "encountered an exception while running", code = 1)
 			print(e, file = stderr)
-			loop_exit_code = 1
+			exit_code = 1
+			close_all()
 			break
+	
+	sys.exit(exit_code)
 
-		if profile:
+def parse_config_persistent(send, config):
+
+	exit_flag = False
+	try:
+		apikey = config["persistent"]["key"]["database"]
+	except:
+		send(stderr, ERR, "database key field in config must be present", code = 111)
+		exit_flag = True
+	try:
+		tbakey = config["persistent"]["key"]["tba"]
+	except:
+		send(stderr, ERR, "tba key field in config must be present", code = 112)
+		exit_flag = True
+	try:
+		preference = config["persistent"]["config-preference"]
+	except:
+		send(stderr, ERR, "config-preference field in config must be present", code = 113)
+		exit_flag = True
+	try:
+		sync = config["persistent"]["synchronize-config"]
+	except:
+		send(stderr, ERR, "synchronize-config field in config must be present", code = 114)
+		exit_flag = True
+
+	if apikey == None or apikey == "":
+		send(stderr, ERR, "database key field in config must not be empty, please populate the database key", code = 115)
+		exit_flag = True
+	if tbakey == None or tbakey == "":
+		send(stderr, ERR, "tba key field in config must not be empty, please populate the tba key", code = 116)
+		exit_flag = True
+	if preference == None or preference == "":
+		send(stderr, ERR, "config-preference field in config must not be empty, please populate config-preference", code = 117)
+		exit_flag = True
+	if sync != True and sync != False:
+		send(stderr, ERR, "synchronize-config field in config must be a boolean, please populate synchronize-config", code = 118)
+		exit_flag = True
+
+	return exit_flag, apikey, tbakey, preference, sync
+
+def parse_config_variable(send, config):
+
+	exit_flag = False
+
+	sys_max_threads = os.cpu_count()
+	try:
+		cfg_max_threads = config["variable"]["max-threads"]
+	except:
+		send(stderr, ERR, "max-threads field in config must not be empty, refer to documentation for configuration options", code = 109)
+		exit_flag = True
+
+	if cfg_max_threads > -sys_max_threads and cfg_max_threads < 0 :
+		alloc_processes = sys_max_threads + cfg_max_threads
+	elif cfg_max_threads > 0 and cfg_max_threads < 1:
+		alloc_processes = math.floor(cfg_max_threads * sys_max_threads)
+	elif cfg_max_threads > 1 and cfg_max_threads <= sys_max_threads:
+		alloc_processes = cfg_max_threads
+	elif cfg_max_threads == 0:
+		alloc_processes = sys_max_threads
+	else:
+		send(stderr, ERR, "max-threads must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads) + ", but got " + cfg_max_threads, code = 110)
+		exit_flag = True
+
+	try:
+		exec_threads = Pool(processes = alloc_processes)
+	except Exception as e:
+		send(stderr, ERR, "unable to start threads", code = 200)
+		send(stderr, INF, e)
+		exit_flag = True
+	send(stdout, INF, "successfully initialized " + str(alloc_processes) + " threads")
+
+	try:
+		competition = config["variable"]["competition"]
+	except:
+		send(stderr, ERR, "could not find competition field in config", code = 101)
+		exit_flag = True
+	try:
+		match_tests = config["variable"]["statistics"]["match"]
+	except:
+		send(stderr, ERR, "could not find match field in config", code = 102)
+		exit_flag = True
+	try:
+		metrics_tests = config["variable"]["statistics"]["metric"]
+	except:
+		send(stderr, ERR, "could not find metrics field in config", code = 103)
+		exit_flag = True
+	try:
+		pit_tests = config["variable"]["statistics"]["pit"]
+	except:
+		send(stderr, ERR, "could not find pit field in config", code = 104)
+		exit_flag = True
+
+	if competition == None or competition == "":
+		send(stderr, ERR, "competition field in config must not be empty", code = 105)
+		exit_flag = True
+	if match_tests == None:
+		send(stderr, ERR, "matchfield in config must not be empty", code = 106)
+		exit_flag = True
+	if metrics_tests == None:
+		send(stderr, ERR, "metrics field in config must not be empty", code = 107)
+		exit_flag = True
+	if pit_tests == None:
+		send(stderr, ERR, "pit field in config must not be empty", code = 108)
+		exit_flag = True
+
+	send(stdout, INF, "found and loaded competition, match, metrics, pit from config")
+
+	return exit_flag, exec_threads, competition, match_tests, metrics_tests, pit_tests
+
+def resolve_config_conflicts(send, client, config, preference, sync):
+
+	if sync:
+		if preference == "local" or preference == "client":
+			send(stdout, INF, "config-preference set to local/client, loading local config information")
+			remote_config = get_database_config(client)
+			if remote_config != config["variable"]:
+				set_database_config(client, config["variable"])
+				send(stdout, INF, "database config was different and was updated")
 			return
-
-	sys.exit(loop_exit_code)
+		elif preference == "remote" or preference == "database":
+			send(stdout, INF, "config-preference set to remote/database, loading remote config information")
+			remote_config= get_database_config(client)
+			if remote_config != config["variable"]:
+				config["variable"] = remote_config
+				if save_config(config_path, config):
+					send(stderr, ERR, "local config was different but could not be updated")
+					config = 1
+					return
+				send(stdout, INF, "local config was different and was updated")
+			return
+		else:
+			send(stderr, ERR, "config-preference field in config must be \"local\"/\"client\" or \"remote\"/\"database\"")
+			config = 1
+			return
+	else:
+		if preference == "local" or preference == "client":
+			send(stdout, INF, "config-preference set to local/client, loading local config information")
+			return
+		elif preference == "remote" or preference == "database":
+			send(stdout, INF, "config-preference set to remote/database, loading database config information")
+			config["variable"] = get_database_config(client)
+			return
+		else:
+			send(stderr, ERR, "config-preference field in config must be \"local\"/\"client\" or \"remote\"/\"database\"")
+			config = 1
+			return
 
 def load_config(path, config_vector):
 	try:
@@ -432,15 +504,12 @@ def load_config(path, config_vector):
 		return 1
 
 def save_config(path, config_vector):
-	try:
-		f = open(path)
-		json.dump(config_vector)
-		f.close()
-		return 0
-	except:
-		return 1
+	f = open(path, "w+")
+	json.dump(config_vector, f, ensure_ascii=False, indent=4)
+	f.close()
+	return 0
 
-def start(pid_path, verbose = False, profile = False):
+def start(pid_path, verbose = False, profile = False, debug = False):
 
 	if profile:
 
@@ -459,6 +528,10 @@ def start(pid_path, verbose = False, profile = False):
 	elif verbose:
 
 		main(log, verbose = verbose)
+
+	elif debug:
+
+		main(log, verbose = True, profile = True, debug = debug)
 
 	else:
 
@@ -547,10 +620,12 @@ if __name__ == "__main__":
 				start(None, verbose = True)
 			elif 'profile' == sys.argv[1]:
 				start(None, profile=True)
+			elif 'debug' == sys.argv[1]:
+				start(None, debug = True)
 			else:
-				print("usage: %s start|stop|restart|verbose|profile" % sys.argv[0])
+				print("usage: %s start|stop|restart|verbose|profile|debug" % sys.argv[0])
 				sys.exit(2)
 			sys.exit(0)
 		else:
-			print("usage: %s start|stop|restart|verbose|profile" % sys.argv[0])
+			print("usage: %s start|stop|restart|verbose|profile|debug" % sys.argv[0])
 			sys.exit(2)

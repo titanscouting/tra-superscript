@@ -9,11 +9,11 @@ def simplestats(data_test):
 
 	signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-	data = np.array(data_test[0])
+	data = np.array(data_test[3])
 	data = data[np.isfinite(data)]
 	ranges = list(range(len(data)))
 
-	test = data_test[1]
+	test = data_test[2]
 
 	if test == "basic_stats":
 		return an.basic_stats(data)
@@ -48,13 +48,7 @@ def matchloop(client, competition, data, tests, exec_threads):
 				value = self[item] = type(self)()
 				return value
 
-	return_vector = {}
-	
-	team_filtered = []
-	variable_filtered = []
-	variable_data = []
-	test_filtered = []
-	result_filtered = []
+	input_vector = []
 	return_vector = AutoVivification()
 
 	for team in data:
@@ -65,35 +59,35 @@ def matchloop(client, competition, data, tests, exec_threads):
 
 				for test in tests[variable]:
 
-					team_filtered.append(team)
-					variable_filtered.append(variable)
-					variable_data.append((data[team][variable], test))
-					test_filtered.append(test)
+					input_vector.append((team, variable, test, data[team][variable]))
 
-	result_filtered = exec_threads.map(simplestats, variable_data)
+	result_filtered = exec_threads.map(simplestats, input_vector)
+	
 	i = 0
 
 	result_filtered = list(result_filtered)
 
 	for result in result_filtered:
 
-		filtered = test_filtered[i]
+		filtered = input_vector[i][2]
 
 		try:
 			short = short_mapping[filtered]
-			return_vector[team_filtered[i]][variable_filtered[i]][test_filtered[i]] = result[short]
+			return_vector[input_vector[i][0]][input_vector[i][1]][input_vector[i][2]] = result[short]
 		except KeyError: # not in mapping
-			return_vector[team_filtered[i]][variable_filtered[i]][test_filtered[i]] = result
+			return_vector[input_vector[i][0]][input_vector[i][1]][input_vector[i][2]] = result
+
 		i += 1
 
 	return return_vector
 
-def metricloop(tbakey, client, competition, timestamp, metrics): # listener based metrics update
+def metricloop(client, competition, data, metrics): # listener based metrics update
 
 	elo_N = metrics["elo"]["N"]
 	elo_K = metrics["elo"]["K"]
 
-	matches = pull_new_tba_matches(tbakey, competition, timestamp)
+	matches = data
+	#matches = pull_new_tba_matches(tbakey, competition, timestamp)
 
 	red = {}
 	blu = {}
