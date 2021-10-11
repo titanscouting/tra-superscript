@@ -135,7 +135,8 @@ def set_current_time(client, current_time):
 
 def get_database_config(client):
 
-	return get_analysis_flags(client, "config")["config"]
+	remote_config = get_analysis_flags(client, "config")
+	return remote_config["config"] if remote_config != None else None
 
 def set_database_config(client, config):
 

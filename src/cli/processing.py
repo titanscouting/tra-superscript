@@ -81,12 +81,13 @@ def matchloop(client, competition, data, tests, exec_threads):
 
 	return return_vector
 
-def metricloop(tbakey, client, competition, timestamp, metrics): # listener based metrics update
+def metricloop(client, competition, data, metrics): # listener based metrics update
 
 	elo_N = metrics["elo"]["N"]
 	elo_K = metrics["elo"]["K"]
 
-	matches = pull_new_tba_matches(tbakey, competition, timestamp)
+	matches = data
+	#matches = pull_new_tba_matches(tbakey, competition, timestamp)
 
 	red = {}
 	blu = {}
