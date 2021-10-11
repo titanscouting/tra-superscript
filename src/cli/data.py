@@ -194,7 +194,7 @@ def push_pit(client, competition, pit):
 
 	for variable in pit:
     
-		push_team_pit_data(apikey, competition, variable, pit[variable])
+		push_team_pit_data(client, competition, variable, pit[variable])
 
 def check_new_database_matches(client, competition):
 
