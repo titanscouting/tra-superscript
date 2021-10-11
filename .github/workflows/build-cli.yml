@@ -5,15 +5,31 @@ name: Build Superscript Linux
 
 on:
   release:
-    types: [published, created, edited]
+    types: [published, edited]
 
 jobs:
   generate:
     name: Build Linux
     runs-on: ubuntu-latest
-
     steps: 
       - name: Checkout master
         uses: actions/checkout@master
-      - name: Echo test
-        run: echo "test"
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+        working-directory: src/
+      - name: Give Execute Permission
+        run: chmod +x build-CLI.sh
+        working-directory: build/
+      - name: Build Binary
+        run: ./build-CLI.sh
+        working-directory: build/
+      - name: Copy Binary to Root Dir
+        run: cp superscript ..
+        working-directory: dist/
+      - name: Upload Release Asset
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: superscript
+          asset_name: superscript
+          tag: ${{ github.ref }}
