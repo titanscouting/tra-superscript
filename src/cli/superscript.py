@@ -160,6 +160,7 @@ import pymongo
 import sys
 import threading
 import time
+import traceback
 import warnings
 import websockets
 
@@ -234,7 +235,6 @@ def main(send, verbose = False, profile = False, debug = False):
 			client.close()
 
 	warnings.filterwarnings("ignore")
-	sys.stderr = open("errorlog.log", "w")
 	exit_code = 0
 
 	if verbose:
@@ -315,7 +315,7 @@ def main(send, verbose = False, profile = False, debug = False):
 			if profile:
 				return # return instead of break to avoid sys.exit
 
-			event_delay = config["event-delay"]
+			event_delay = config["variable"]["event-delay"]
 			if event_delay:
 				send(stdout, INF, "loop delayed until database returns new matches")
 				new_match = False
@@ -324,7 +324,7 @@ def main(send, verbose = False, profile = False, debug = False):
 					new_match = check_new_database_matches(client, competition)
 				send(stdout, INF, "database returned new matches")
 			else:
-				loop_delay = float(config["loop-delay"])
+				loop_delay = float(config["variable"]["loop-delay"])
 				remaining_time = loop_delay - (time.time() - loop_start)
 				if remaining_time > 0:
 					send(stdout, INF, "loop delayed by " + str(remaining_time) + " seconds")
@@ -334,17 +334,16 @@ def main(send, verbose = False, profile = False, debug = False):
 			send(stdout, INF, "detected KeyboardInterrupt, killing threads")
 			close_all()
 			send(stdout, INF, "terminated threads, exiting")
-			loop_exit_code = 0
 			break
 
 		except Exception as e:
 			send(stderr, ERR, "encountered an exception while running", code = 1)
-			print(e, file = stderr)
+			traceback.print_exc(file = stderr)
 			exit_code = 1
 			close_all()
 			break
 	
-	sys.exit(exit_code)
+	return exit_code
 
 def parse_config_persistent(send, config):
 
@@ -520,19 +519,22 @@ def start(pid_path, verbose = False, profile = False, debug = False):
 		import cProfile, pstats, io
 		profile = cProfile.Profile()
 		profile.enable()
-		main(send, profile = True)
+		exit_code = main(send, profile = True)
 		profile.disable()
 		f = open("profile.txt", 'w+')
 		ps = pstats.Stats(profile, stream = f).sort_stats('cumtime')
 		ps.print_stats()
+		sys.exit(exit_code)
 
 	elif verbose:
 
-		main(log, verbose = verbose)
+		exit_code = main(log, verbose = verbose)
+		sys.exit(exit_code)
 
 	elif debug:
 
-		main(log, verbose = True, profile = True, debug = debug)
+		exit_code = main(log, verbose = True, profile = True, debug = debug)
+		sys.exit(exit_code)
 
 	else:
 
@@ -571,7 +573,8 @@ def start(pid_path, verbose = False, profile = False, debug = False):
 			asyncio.get_event_loop().run_until_complete(start_server)
 			threading.Thread(target = asyncio.get_event_loop().run_forever).start()
 
-			main(send)	
+			exit_code = main(send)
+			sys.exit(exit_code)
 
 def stop(pid_path):
 	try:
