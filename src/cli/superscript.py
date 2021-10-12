@@ -536,7 +536,7 @@ def start(pid_path, verbose = False, profile = False, debug = False):
 
 	else:
 
-		f = open('errorlog.txt', 'w+')
+		f = open('errorlog.log', 'w+')
 		with daemon.DaemonContext(
 			working_directory=os.getcwd(),
 			pidfile=pidfile.TimeoutPIDLockFile(pid_path),
