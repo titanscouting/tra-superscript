@@ -595,7 +595,7 @@ def stop(pid_path):
 			if os.path.exists(pid_path):
 				os.remove(pid_path)
 		else:
-			print(str(err))
+			traceback.print_exc(file = stderr)
 			sys.exit(1)
 
 def restart(pid_path):
