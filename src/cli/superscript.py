@@ -252,6 +252,7 @@ def main(send, verbose = False, profile = False, debug = False):
 
 			if load_config(config_path, config):
 				send(stderr, ERR, "could not find config at <" + config_path + ">, generating blank config and exiting", code = 100)
+				close_all()
 				exit_code = 1
 				break
 			
@@ -260,6 +261,7 @@ def main(send, verbose = False, profile = False, debug = False):
 			flag, apikey, tbakey, preference, sync = parse_config_persistent(send, config)
 			if flag:
 				exit_code = 1
+				close_all()
 				break
 			send(stdout, INF, "found and loaded database and tba keys")
 
@@ -271,10 +273,12 @@ def main(send, verbose = False, profile = False, debug = False):
 			resolve_config_conflicts(send, client, config, preference, sync)
 			if config == 1:
 				exit_code = 1
+				close_all()
 				break
 			flag, exec_threads, competition, match_tests, metrics_tests, pit_tests = parse_config_variable(send, config)
 			if flag:
 				exit_code = 1
+				close_all()
 				break
 
 			start = time.time()
