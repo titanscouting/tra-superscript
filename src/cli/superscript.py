@@ -317,7 +317,7 @@ def main(send, verbose = False, profile = False, debug = False):
 			send(stdout, INF, "finished all tasks in " + str(time.time() - loop_start) + " seconds, looping")
 
 			if profile:
-				return # return instead of break to avoid sys.exit
+				return 0 # return instead of break to avoid sys.exit
 
 			event_delay = config["variable"]["event-delay"]
 			if event_delay:
