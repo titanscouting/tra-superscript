@@ -151,18 +151,16 @@ __all__ = [
 
 # imports:
 
-import asyncio
 import json
 import math
 from multiprocessing import Pool, freeze_support
 import os
 import pymongo
+import socket
 import sys
-import threading
 import time
 import traceback
 import warnings
-import websockets
 
 from interface import splash, log, ERR, INF, stdout, stderr
 from data import get_previous_time, pull_new_tba_matches, set_current_time, load_match, push_match, load_pit, push_pit, get_database_config, set_database_config, check_new_database_matches
@@ -541,44 +539,26 @@ def start(pid_path, verbose = False, profile = False, debug = False):
 		sys.exit(exit_code)
 
 	else:
-
+		
 		f = open('errorlog.log', 'w+')
 		with daemon.DaemonContext(
-			working_directory=os.getcwd(),
-			pidfile=pidfile.TimeoutPIDLockFile(pid_path),
-			stderr=f
+			working_directory = os.getcwd(),
+			pidfile = pidfile.TimeoutPIDLockFile(pid_path),
+			stderr = f
 			):
 
-			async def handler(client, path):
-				clients.append(client)
-				while True:
-					try:
-						pong_waiter = await client.ping()
-						await pong_waiter
-						time.sleep(3)
-					except Exception as e:
-						clients.remove(client)
-						break
+			server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+			server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+			server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+			server.settimeout(0.2)
 
-			async def send_one(client, data):
-				await client.send(data)
-				
 			def send(target, level, message, code = 0):
-				message_clients = clients.copy()
-				for client in message_clients:
-					try:
-						asyncio.run(send_one(client, message))
-					except:
-						pass
-
-			clients = []
-			start_server = websockets.serve(handler, "0.0.0.0", 5678)
-
-			asyncio.get_event_loop().run_until_complete(start_server)
-			threading.Thread(target = asyncio.get_event_loop().run_forever).start()
+				server.sendto(bytes(message, 'utf-8'), ('<broadcast>', 5678))
 
 			exit_code = main(send)
-			sys.exit(exit_code)
+			server.close()
+			f.close()
+			sys.exit()
 
 def stop(pid_path):
 	try:
