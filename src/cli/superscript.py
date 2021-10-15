@@ -160,6 +160,7 @@ import sys
 import time
 import traceback
 import warnings
+import zmq
 
 from interface import splash, log, ERR, INF, stdout, stderr
 from data import get_previous_time, pull_new_tba_matches, set_current_time, load_match, push_match, load_pit, push_pit, get_database_config, set_database_config, check_new_database_matches
@@ -312,8 +313,6 @@ def main(send, verbose = False, profile = False, debug = False):
 
 			send(stdout, INF, "closed threads and database client")
 			send(stdout, INF, "finished all tasks in " + str(time.time() - loop_start) + " seconds, looping")
-
-			raise Exception("boop")
 
 			if profile:
 				return 0 # return instead of break to avoid sys.exit
@@ -547,8 +546,6 @@ def start(pid_path, verbose = False, profile = False, debug = False):
 			pidfile = pidfile.TimeoutPIDLockFile(pid_path),
 			stderr = f
 			):
-
-			import zmq
 
 			context = zmq.Context()
 			socket = context.socket(zmq.PUB)
