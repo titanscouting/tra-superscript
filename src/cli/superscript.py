@@ -156,7 +156,6 @@ import math
 from multiprocessing import Pool, freeze_support
 import os
 import pymongo
-import socket
 import sys
 import time
 import traceback
@@ -313,6 +312,8 @@ def main(send, verbose = False, profile = False, debug = False):
 
 			send(stdout, INF, "closed threads and database client")
 			send(stdout, INF, "finished all tasks in " + str(time.time() - loop_start) + " seconds, looping")
+
+			raise Exception("boop")
 
 			if profile:
 				return 0 # return instead of break to avoid sys.exit
@@ -547,16 +548,19 @@ def start(pid_path, verbose = False, profile = False, debug = False):
 			stderr = f
 			):
 
-			server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-			server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-			server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-			server.settimeout(0.2)
+			import zmq
+
+			context = zmq.Context()
+			socket = context.socket(zmq.PUB)
+			socket.bind("tcp://*:5678")
+
+			socket.send(b'status')
 
 			def send(target, level, message, code = 0):
-				server.sendto(bytes(message, 'utf-8'), ('<broadcast>', 5678))
+				socket.send(bytes("status: " + message, 'utf-8'))
 
 			exit_code = main(send)
-			server.close()
+			socket.close()
 			f.close()
 			sys.exit()
 
