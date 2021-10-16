@@ -559,7 +559,7 @@ def start(pid_path, verbose = False, profile = False, debug = False):
 			exit_code = main(send)
 			socket.close()
 			f.close()
-			sys.exit()
+			sys.exit(exit_code)
 
 def stop(pid_path):
 	try:
