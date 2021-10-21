@@ -3,14 +3,6 @@ import signal
 import numpy as np
 import tra_analysis as an
 
-class AutoVivification(dict):
-		def __getitem__(self, item):
-			try:
-				return dict.__getitem__(self, item)
-			except KeyError:
-				value = self[item] = type(self)()
-				return value
-
 class Module:
 	config = None
 	data = None
@@ -82,7 +74,7 @@ class Match:
 
 		tests = test_data["tests"]
 
-		results = AutoVivification()
+		results = {}
 
 		if "basic_stats" in tests:
 			results["basic_stats"] = an.basic_stats(data)
@@ -106,7 +98,6 @@ class Match:
 
 	def push_results(self):
 		short_mapping = {"regression_linear": "lin", "regression_logarithmic": "log", "regression_exponential": "exp", "regression_polynomial": "ply", "regression_sigmoidal": "sig"}
-		results_short = AutoVivification()
 		i = 0
 		for result in self.results:
 			for variable in result:
@@ -114,6 +105,5 @@ class Match:
 					short = short_mapping[variable]
 				else:
 					short = variable
-					d.push_team_match_results(self.data[i]["team"], self.data[i]["competition"], self.data[i]["variable"], short, result[variable])
-				#results_short[ self.data["team"] ][ self.data["competition"] ][ self.data["variable"] ][short] = result[variable]
+					d.push_team_match_results(self.data[i]["team"], self.data[i]["competition"], self.data[i]["variable"], short, result[variable]) # needs implementation
 			i+=1
