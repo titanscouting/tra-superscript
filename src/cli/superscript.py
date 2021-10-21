@@ -177,48 +177,64 @@ sample_json = """{
 		"synchronize-config":false
 	},
 	"variable":{
+
 		"max-threads":0.5,
+
+		"competition":"",
 		"team":"",
-		"competition": "2020ilch",
-		"statistics":{
+		
+		"event-delay":false,
+		"loop-delay":0,
+		"reportable":true,
+
+		"teams":[],
+
+		"modules":{
+
 			"match":{
-				"balls-blocked":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-				"balls-collected":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-				"balls-lower-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-				"balls-lower-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-				"balls-started":["basic_stats","historical_analyss","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-				"balls-upper-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-				"balls-upper-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"]
+				"tests":{
+					"balls-blocked":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+					"balls-collected":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+					"balls-lower-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+					"balls-lower-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+					"balls-started":["basic_stats","historical_analyss","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+					"balls-upper-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+					"balls-upper-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"]
+				}
 
 			},
+
 			"metric":{
-				"elo":{
-					"score":1500,
-					"N":400,
-					"K":24
-				},
-				"gl2":{
-					"score":1500,
-					"rd":250,
-					"vol":0.06
-				},
-				"ts":{
-					"mu":25,
-					"sigma":8.33
+				"tests":{
+					"elo":{
+						"score":1500,
+						"N":400,
+						"K":24
+					},
+					"gl2":{
+						"score":1500,
+						"rd":250,
+						"vol":0.06
+					},
+					"ts":{
+						"mu":25,
+						"sigma":8.33
+					}
 				}
 			},
+
 			"pit":{
-				"wheel-mechanism":true,
-				"low-balls":true,
-				"high-balls":true,
-				"wheel-success":true,
-				"strategic-focus":true,
-				"climb-mechanism":true,
-				"attitude":true
+				"tests":{
+					"wheel-mechanism":true,
+					"low-balls":true,
+					"high-balls":true,
+					"wheel-success":true,
+					"strategic-focus":true,
+					"climb-mechanism":true,
+					"attitude":true
+				}
 			}
-		},
-		"event-delay":false,
-		"loop-delay":60
+		}
 	}
 }"""
 
