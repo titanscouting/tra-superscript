@@ -36,6 +36,7 @@ class Match:
 		self.teams = teams
 
 	def validate_config(self):
+		return True, ""
 		"""
 		if self.config == None:
 			return False, "config cannot be empty"
