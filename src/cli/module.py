@@ -1,4 +1,13 @@
 import data as d
+
+class AutoVivification(dict):
+		def __getitem__(self, item):
+			try:
+				return dict.__getitem__(self, item)
+			except KeyError:
+				value = self[item] = type(self)()
+				return value
+
 class Module:
 	config = None
 	data = None
@@ -21,8 +30,7 @@ class Match:
 	timestamp = None
 	teams = None
 
-	data = None
-	results = None
+	data = []
 	
 	def __init__(self, config, apikey, tbakey, timestamp, teams):
 		self.config = config
@@ -32,21 +40,30 @@ class Match:
 		self.teams = teams
 
 	def validate_config(self):
+		return True, ""
+		"""
 		if self.config == None:
-			return "config cannot be empty"
+			return False, "config cannot be empty"
 		elif self.apikey == None or self.apikey == "":
-			return "apikey cannot be empty"
+			return False, "apikey cannot be empty"
 		elif self.tbakey == None or self.tbakey == "":
-			return "tbakey cannot be empty"
+			return False, "tbakey cannot be empty"
 		elif not(self.config["scope"] in ["competition", "season", "none"]):
-			return "scope must be one of: (competition, season, none)"
+			return False, "scope must be one of: (competition, season, none)"
 		elif not(self.config["agglomeration"] in ["none", "mean"]):
-			return "agglomeration must be one of: (none, mean)"
+			return False, "agglomeration must be one of: (none, mean)"
 		else:
-			return None
+			return True, ""
+		"""
 
 	def load_data(self):
-		pass
+		scope = self.config["scope"]
+		for team in self.teams:
+			competitions = d.get_team_conpetitions(self.apikey, team, scope) # unimplemented
+			for competition in competitions:
+				for variable in self.config["tests"]:
+					match_data = d.get_team_match_data(self.apikey, competition, team) # needs modified implementation
+					self.data.append((team, competition, variable, match_data))
 
 	def process_data(self, exec_threads):
 		pass
