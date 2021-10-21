@@ -36,7 +36,6 @@ class Match:
 		self.teams = teams
 
 	def validate_config(self):
-		return True, ""
 		"""
 		if self.config == None:
 			return False, "config cannot be empty"
@@ -46,8 +45,10 @@ class Match:
 			return False, "tbakey cannot be empty"
 		elif not(self.config["scope"] in ["competition", "season", "none"]):
 			return False, "scope must be one of: (competition, season, none)"
-		elif not(self.config["agglomeration"] in ["none", "mean"]):
-			return False, "agglomeration must be one of: (none, mean)"
+		elif self.config["agglomeration"] != "none":
+			return False, "agglomeration must be 'none', there are currently no supported Agglomeration methods"
+		elif self.config["tests"] == None:
+			return False, "tests must not be None, it may be empty {}"
 		else:
 			return True, ""
 		"""
