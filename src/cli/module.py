@@ -62,7 +62,7 @@ class Match:
 			competitions = d.get_team_conpetitions(self.apikey, team, scope) # unimplemented
 			for competition in competitions:
 				for variable in self.config["tests"]:
-					match_data = d.get_team_match_data(self.apikey, competition, team) # needs modified implementation
+					match_data = d.get_team_match_data(self.apikey, competition, team, variable) # needs modified implementation
 					self.data.append((team, competition, variable, match_data))
 
 	def process_data(self, exec_threads):
