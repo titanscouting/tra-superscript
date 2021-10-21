@@ -170,8 +170,8 @@ config_path = "config.json"
 sample_json = """{
 	"persistent":{
 		"key":{
-			"database":"mongodb+srv://analysis:MU2gPeEjEurRt2n@2022-scouting-4vfuu.mongodb.net/<dbname>?retryWrites=true&w=majority",
-			"tba":"UDvKmPjPRfwwUdDX1JxbmkyecYBJhCtXeyVk9vmO2i7K0Zn4wqQPMfzuEINXJ7e5"
+			"database":"",
+			"tba":""
 		},
 		"config-preference":"local",
 		"synchronize-config":false
