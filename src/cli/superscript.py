@@ -308,16 +308,11 @@ def main(send, verbose = False, profile = False, debug = False):
 					current_module.load_data()
 					current_module.process_data(exec_threads)
 					current_module.push_results()
-					print(m + " module finished in " + str(time.time() - start) + " seconds")
-
-			if debug:
-				f = open("matchloop.log", "w+")
-				json.dump(match_results, f, ensure_ascii=False, indent=4)
-				f.close()
-
-				f = open("pitloop.log", "w+")
-				json.dump(pit_results, f, ensure_ascii=False, indent=4)
-				f.close()
+					send(stdout, INF, m + " module finished in " + str(time.time() - start) + " seconds")
+					if debug:
+						f = open(m + ".log", "w+")
+						json.dump({"data": current_module.data, "results":current_module.results}, f, ensure_ascii=False, indent=4)
+						f.close()
 
 			set_current_time(client, loop_start)
 			close_all()
