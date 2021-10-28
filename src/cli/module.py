@@ -150,12 +150,12 @@ class Metric:
 		return True, ""
 
 	def load_data(self):
-		self.data = d.pull_new_tba_matches(self.apikey, self.competition, self.timestamp)
+		self.data = d.pull_new_tba_matches(self.tbakey, self.competition, self.timestamp)
 
 	def process_data(self, exec_threads):
 
-		elo_N = self.config["elo"]["N"]
-		elo_K = self.config["elo"]["K"]
+		elo_N = self.config["tests"]["elo"]["N"]
+		elo_K = self.config["tests"]["elo"]["K"]
 
 		matches = self.data
 
@@ -164,8 +164,8 @@ class Metric:
 
 		for match in matches:
 
-			red = d.load_metric(self.apikey, self.competition, match, "red", self.config)
-			blu = d.load_metric(self.apikey, self.competition, match, "blue", self.config)
+			red = d.load_metric(self.apikey, self.competition, match, "red", self.config["tests"])
+			blu = d.load_metric(self.apikey, self.competition, match, "blue", self.config["tests"])
 	
 			elo_red_total = 0
 			elo_blu_total = 0
