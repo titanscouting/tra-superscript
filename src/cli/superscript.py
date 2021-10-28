@@ -163,8 +163,9 @@ import warnings
 import zmq
 
 from interface import splash, log, ERR, INF, stdout, stderr
-from data import get_previous_time, pull_new_tba_matches, set_current_time, load_match, push_match, load_pit, push_pit, get_database_config, set_database_config, check_new_database_matches
-from processing import matchloop, metricloop, pitloop
+from data import get_previous_time, set_current_time, get_database_config, set_database_config, check_new_database_matches
+from module import Match, Metric, Pit
+#from processing import matchloop, metricloop, pitloop
 
 config_path = "config.json"
 sample_json = """{
@@ -254,6 +255,8 @@ def main(send, verbose = False, profile = False, debug = False):
 	if verbose:
 		splash(__version__)
 
+	modules = {"match": Match, "metric": Metric, "pit": Pit}
+
 	while True:
 
 		try:
@@ -289,31 +292,23 @@ def main(send, verbose = False, profile = False, debug = False):
 				exit_code = 1
 				close_all()
 				break
-			flag, exec_threads, competition, match_tests, metrics_tests, pit_tests = parse_config_variable(send, config)
+			flag, exec_threads, competition, config_modules = parse_config_variable(send, config)
 			if flag:
 				exit_code = 1
 				close_all()
 				break
 
-			start = time.time()
-			send(stdout, INF, "loading match, metric, pit data (this may take a few seconds)")
-			match_data = load_match(client, competition)
-			metrics_data = pull_new_tba_matches(tbakey, competition, loop_start)
-			pit_data = load_pit(client, competition)
-			send(stdout, INF, "finished loading match, metric, pit data in "+ str(time.time() - start) + " seconds")
-
-			start = time.time()
-			send(stdout, INF, "performing analysis on match, metrics, pit data")
-			match_results = matchloop(client, competition, match_data, match_tests, exec_threads)
-			metrics_results = metricloop(client, competition, metrics_data, metrics_tests)
-			pit_results = pitloop(client, competition, pit_data, pit_tests)
-			send(stdout, INF, "finished analysis in " + str(time.time() - start) + " seconds")
-
-			start = time.time()
-			send(stdout, INF, "uploading match, metrics, pit results to database")
-			push_match(client, competition, match_results)
-			push_pit(client, competition, pit_results)
-			send(stdout, INF, "finished uploading results in " + str(time.time() - start) + " seconds")
+			for m in config_modules:
+				if m in modules:
+					start = time.time()
+					current_module = modules[m](config_modules[m], client, tbakey, loop_start, competition)
+					valid = current_module.validate_config()
+					if not valid:
+						continue
+					current_module.load_data()
+					current_module.process_data(exec_threads)
+					current_module.push_results()
+					print(m + " module finished in " + str(time.time() - start) + " seconds")
 
 			if debug:
 				f = open("matchloop.log", "w+")
@@ -439,37 +434,21 @@ def parse_config_variable(send, config):
 		send(stderr, ERR, "could not find competition field in config", code = 101)
 		exit_flag = True
 	try:
-		match_tests = config["variable"]["statistics"]["match"]
+		modules = config["variable"]["modules"]
 	except:
-		send(stderr, ERR, "could not find match field in config", code = 102)
-		exit_flag = True
-	try:
-		metrics_tests = config["variable"]["statistics"]["metric"]
-	except:
-		send(stderr, ERR, "could not find metrics field in config", code = 103)
-		exit_flag = True
-	try:
-		pit_tests = config["variable"]["statistics"]["pit"]
-	except:
-		send(stderr, ERR, "could not find pit field in config", code = 104)
+		send(stderr, ERR, "could not find modules field in config", code = 102)
 		exit_flag = True
 
 	if competition == None or competition == "":
 		send(stderr, ERR, "competition field in config must not be empty", code = 105)
 		exit_flag = True
-	if match_tests == None:
-		send(stderr, ERR, "matchfield in config must not be empty", code = 106)
-		exit_flag = True
-	if metrics_tests == None:
-		send(stderr, ERR, "metrics field in config must not be empty", code = 107)
-		exit_flag = True
-	if pit_tests == None:
-		send(stderr, ERR, "pit field in config must not be empty", code = 108)
+	if modules == None:
+		send(stderr, ERR, "modules  in config must not be empty", code = 106)
 		exit_flag = True
 
 	send(stdout, INF, "found and loaded competition, match, metrics, pit from config")
 
-	return exit_flag, exec_threads, competition, match_tests, metrics_tests, pit_tests
+	return exit_flag, exec_threads, competition, modules
 
 def resolve_config_conflicts(send, client, config, preference, sync):
 
