@@ -165,7 +165,6 @@ import zmq
 from interface import splash, log, ERR, INF, stdout, stderr
 from data import get_previous_time, set_current_time, get_database_config, set_database_config, check_new_database_matches
 from module import Match, Metric, Pit
-#from processing import matchloop, metricloop, pitloop
 
 config_path = "config.json"
 sample_json = """{
