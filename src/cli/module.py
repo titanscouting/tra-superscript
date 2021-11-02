@@ -1,24 +1,37 @@
+import abc
 import data as d
 import signal
 import numpy as np
 import tra_analysis as an
 
-class Module:
-	config = None
-	data = None
-	results = None
-	def __init__(self, config, apikey, tbakey, timestamp):
-		pass
-	def validate_config(self):
-		pass
-	def load_data(self):
-		pass
-	def process_data(self, exec_threads):
-		pass
-	def push_results(self):
-		pass
+class Module(metaclass = abc.ABCMeta):
 
-class Match:
+	@classmethod
+	def __subclasshook__(cls, subclass):
+		return (hasattr(subclass, 'validate_config') and 
+				callable(subclass.validate_config) and 
+				hasattr(subclass, 'load_data') and 
+				callable(subclass.load_data) and
+				hasattr(subclass, 'process_data') and 
+				callable(subclass.process_data) and 
+				hasattr(subclass, 'push_results') and 
+				callable(subclass.push_results)
+				)
+
+	@abc.abstractmethod
+	def validate_config(self):
+		raise NotImplementedError
+	@abc.abstractmethod
+	def load_data(self):
+		raise NotImplementedError
+	@abc.abstractmethod
+	def process_data(self, exec_threads):
+		raise NotImplementedError
+	@abc.abstractmethod
+	def push_results(self):
+		raise NotImplementedError
+
+class Match (Module):
 
 	config = None
 	apikey = None
@@ -128,7 +141,7 @@ class Match:
 
 		d.push_match(self.apikey, self.competition, self.results)
 
-class Metric:
+class Metric (Module):
 
 	config = None
 	apikey = None
@@ -248,7 +261,7 @@ class Metric:
 	def push_results(self):
 		pass
 
-class Pit:
+class Pit (Module):
 
 	config = None
 	apikey = None
