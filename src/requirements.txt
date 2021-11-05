@@ -1,6 +1,5 @@
 requests
 pymongo
-pandas
 tra-analysis
 
 dnspython
@@ -11,7 +10,6 @@ scipy
 scikit-learn
 six
 pyparsing
-pandas
 
 kivy==2.0.0rc2
 

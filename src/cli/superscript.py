@@ -163,62 +163,78 @@ import warnings
 import zmq
 
 from interface import splash, log, ERR, INF, stdout, stderr
-from data import get_previous_time, pull_new_tba_matches, set_current_time, load_match, push_match, load_pit, push_pit, get_database_config, set_database_config, check_new_database_matches
-from processing import matchloop, metricloop, pitloop
+from data import get_previous_time, set_current_time, get_database_config, set_database_config, check_new_database_matches
+from module import Match, Metric, Pit
 
 config_path = "config.json"
 sample_json = """{
 	"persistent":{
 		"key":{
-			"database":"mongodb+srv://analysis:MU2gPeEjEurRt2n@2022-scouting-4vfuu.mongodb.net/<dbname>?retryWrites=true&w=majority",
-			"tba":"UDvKmPjPRfwwUdDX1JxbmkyecYBJhCtXeyVk9vmO2i7K0Zn4wqQPMfzuEINXJ7e5"
+			"database":"",
+			"tba":""
 		},
 		"config-preference":"local",
 		"synchronize-config":false
 	},
 	"variable":{
+
 		"max-threads":0.5,
+
+		"competition":"",
 		"team":"",
-		"competition": "2020ilch",
-		"statistics":{
+		
+		"event-delay":false,
+		"loop-delay":0,
+		"reportable":true,
+
+		"teams":[],
+
+		"modules":{
+
 			"match":{
-				"balls-blocked":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-				"balls-collected":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-				"balls-lower-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-				"balls-lower-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-				"balls-started":["basic_stats","historical_analyss","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-				"balls-upper-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-				"balls-upper-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"]
+				"tests":{
+					"balls-blocked":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+					"balls-collected":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+					"balls-lower-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+					"balls-lower-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+					"balls-started":["basic_stats","historical_analyss","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+					"balls-upper-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+					"balls-upper-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"]
+				}
 
 			},
+
 			"metric":{
-				"elo":{
-					"score":1500,
-					"N":400,
-					"K":24
-				},
-				"gl2":{
-					"score":1500,
-					"rd":250,
-					"vol":0.06
-				},
-				"ts":{
-					"mu":25,
-					"sigma":8.33
+				"tests":{
+					"elo":{
+						"score":1500,
+						"N":400,
+						"K":24
+					},
+					"gl2":{
+						"score":1500,
+						"rd":250,
+						"vol":0.06
+					},
+					"ts":{
+						"mu":25,
+						"sigma":8.33
+					}
 				}
 			},
+
 			"pit":{
-				"wheel-mechanism":true,
-				"low-balls":true,
-				"high-balls":true,
-				"wheel-success":true,
-				"strategic-focus":true,
-				"climb-mechanism":true,
-				"attitude":true
+				"tests":{
+					"wheel-mechanism":true,
+					"low-balls":true,
+					"high-balls":true,
+					"wheel-success":true,
+					"strategic-focus":true,
+					"climb-mechanism":true,
+					"attitude":true
+				}
 			}
-		},
-		"event-delay":false,
-		"loop-delay":60
+		}
 	}
 }"""
 
@@ -237,6 +253,8 @@ def main(send, verbose = False, profile = False, debug = False):
 
 	if verbose:
 		splash(__version__)
+
+	modules = {"match": Match, "metric": Metric, "pit": Pit}
 
 	while True:
 
@@ -273,40 +291,27 @@ def main(send, verbose = False, profile = False, debug = False):
 				exit_code = 1
 				close_all()
 				break
-			flag, exec_threads, competition, match_tests, metrics_tests, pit_tests = parse_config_variable(send, config)
+			flag, exec_threads, competition, config_modules = parse_config_variable(send, config)
 			if flag:
 				exit_code = 1
 				close_all()
 				break
 
-			start = time.time()
-			send(stdout, INF, "loading match, metric, pit data (this may take a few seconds)")
-			match_data = load_match(client, competition)
-			metrics_data = pull_new_tba_matches(tbakey, competition, loop_start)
-			pit_data = load_pit(client, competition)
-			send(stdout, INF, "finished loading match, metric, pit data in "+ str(time.time() - start) + " seconds")
-
-			start = time.time()
-			send(stdout, INF, "performing analysis on match, metrics, pit data")
-			match_results = matchloop(client, competition, match_data, match_tests, exec_threads)
-			metrics_results = metricloop(client, competition, metrics_data, metrics_tests)
-			pit_results = pitloop(client, competition, pit_data, pit_tests)
-			send(stdout, INF, "finished analysis in " + str(time.time() - start) + " seconds")
-
-			start = time.time()
-			send(stdout, INF, "uploading match, metrics, pit results to database")
-			push_match(client, competition, match_results)
-			push_pit(client, competition, pit_results)
-			send(stdout, INF, "finished uploading results in " + str(time.time() - start) + " seconds")
-
-			if debug:
-				f = open("matchloop.log", "w+")
-				json.dump(match_results, f, ensure_ascii=False, indent=4)
-				f.close()
-
-				f = open("pitloop.log", "w+")
-				json.dump(pit_results, f, ensure_ascii=False, indent=4)
-				f.close()
+			for m in config_modules:
+				if m in modules:
+					start = time.time()
+					current_module = modules[m](config_modules[m], client, tbakey, loop_start, competition)
+					valid = current_module.validate_config()
+					if not valid:
+						continue
+					current_module.load_data()
+					current_module.process_data(exec_threads)
+					current_module.push_results()
+					send(stdout, INF, m + " module finished in " + str(time.time() - start) + " seconds")
+					if debug:
+						f = open(m + ".log", "w+")
+						json.dump({"data": current_module.data, "results":current_module.results}, f, ensure_ascii=False, indent=4)
+						f.close()
 
 			set_current_time(client, loop_start)
 			close_all()
@@ -423,37 +428,21 @@ def parse_config_variable(send, config):
 		send(stderr, ERR, "could not find competition field in config", code = 101)
 		exit_flag = True
 	try:
-		match_tests = config["variable"]["statistics"]["match"]
+		modules = config["variable"]["modules"]
 	except:
-		send(stderr, ERR, "could not find match field in config", code = 102)
-		exit_flag = True
-	try:
-		metrics_tests = config["variable"]["statistics"]["metric"]
-	except:
-		send(stderr, ERR, "could not find metrics field in config", code = 103)
-		exit_flag = True
-	try:
-		pit_tests = config["variable"]["statistics"]["pit"]
-	except:
-		send(stderr, ERR, "could not find pit field in config", code = 104)
+		send(stderr, ERR, "could not find modules field in config", code = 102)
 		exit_flag = True
 
 	if competition == None or competition == "":
 		send(stderr, ERR, "competition field in config must not be empty", code = 105)
 		exit_flag = True
-	if match_tests == None:
-		send(stderr, ERR, "matchfield in config must not be empty", code = 106)
-		exit_flag = True
-	if metrics_tests == None:
-		send(stderr, ERR, "metrics field in config must not be empty", code = 107)
-		exit_flag = True
-	if pit_tests == None:
-		send(stderr, ERR, "pit field in config must not be empty", code = 108)
+	if modules == None:
+		send(stderr, ERR, "modules  in config must not be empty", code = 106)
 		exit_flag = True
 
 	send(stdout, INF, "found and loaded competition, match, metrics, pit from config")
 
-	return exit_flag, exec_threads, competition, match_tests, metrics_tests, pit_tests
+	return exit_flag, exec_threads, competition, modules
 
 def resolve_config_conflicts(send, client, config, preference, sync):
 
