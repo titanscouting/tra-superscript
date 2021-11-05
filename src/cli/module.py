@@ -298,3 +298,12 @@ class Pit (Module):
 
 	def push_results(self):
 		d.push_pit(self.apikey, self.competition, self.results)
+
+class Rating (Module):
+	pass
+
+class Heatmap (Module):
+	pass
+
+class Sentiment (Module):
+	pass
