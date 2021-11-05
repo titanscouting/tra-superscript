@@ -1,5 +1,4 @@
 import requests
-import pandas as pd
 
 def pull_new_tba_matches(apikey, competition, cutoff):
 	api_key= apikey 

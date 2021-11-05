@@ -13,7 +13,10 @@ a = Analysis(['superscript.py'],
              ],
              hookspath=[],
              runtime_hooks=[],
-             excludes=[],
+             excludes=[
+                 "matplotlib",
+                 "pandas"
+                 ],
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
              cipher=block_cipher,
