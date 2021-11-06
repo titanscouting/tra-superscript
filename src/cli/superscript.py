@@ -166,6 +166,12 @@ from interface import splash, log, ERR, INF, stdout, stderr
 from data import get_previous_time, set_current_time, get_database_config, set_database_config, check_new_database_matches
 from module import Match, Metric, Pit
 
+class ConfigurationError (Exception):
+	code = None
+	def __init__(self, str, code):
+		super().__init__(str)
+		self.code = code
+
 config_path = "config.json"
 sample_json = """{
 	"persistent":{
@@ -247,6 +253,8 @@ def main(send, verbose = False, profile = False, debug = False):
 			exec_threads.close()
 		if "client" in locals():
 			client.close()
+		if "f" in locals():
+			f.close()
 
 	warnings.filterwarnings("ignore")
 	exit_code = 0
@@ -267,18 +275,12 @@ def main(send, verbose = False, profile = False, debug = False):
 			config = {}
 
 			if load_config(config_path, config):
-				send(stderr, ERR, "could not find config at <" + config_path + ">, generating blank config and exiting", code = 100)
-				close_all()
-				exit_code = 1
-				break
+				raise ConfigurationError("could not find config at <" + config_path + ">, generating blank config and exiting", 110)
 			
 			send(stdout, INF, "found and loaded config at <" + config_path + ">")
 
-			flag, apikey, tbakey, preference, sync = parse_config_persistent(send, config)
-			if flag:
-				exit_code = 1
-				close_all()
-				break
+			apikey, tbakey, preference, sync = parse_config_persistent(send, config)
+
 			send(stdout, INF, "found and loaded database and tba keys")
 
 			client = pymongo.MongoClient(apikey)
@@ -286,16 +288,9 @@ def main(send, verbose = False, profile = False, debug = False):
 			send(stdout, INF, "established connection to database")
 			send(stdout, INF, "analysis backtimed to: " + str(get_previous_time(client)))
 
-			resolve_config_conflicts(send, client, config, preference, sync)
-			if config == 1:
-				exit_code = 1
-				close_all()
-				break
-			flag, exec_threads, competition, config_modules = parse_config_variable(send, config)
-			if flag:
-				exit_code = 1
-				close_all()
-				break
+			config = resolve_config_conflicts(send, client, config, preference, sync)
+
+			exec_threads, competition, config_modules = parse_config_variable(send, config)
 
 			for m in config_modules:
 				if m in modules:
@@ -320,7 +315,8 @@ def main(send, verbose = False, profile = False, debug = False):
 			send(stdout, INF, "finished all tasks in " + str(time.time() - loop_start) + " seconds, looping")
 
 			if profile:
-				return 0 # return instead of break to avoid sys.exit
+				exit_code = 0
+				break
 
 			event_delay = config["variable"]["event-delay"]
 			if event_delay:
@@ -343,6 +339,13 @@ def main(send, verbose = False, profile = False, debug = False):
 			send(stdout, INF, "terminated threads, exiting")
 			break
 
+		except ConfigurationError as e:
+			send(stderr, ERR, "encountered a configuration error: " + str(e), code = e.code)
+			traceback.print_exc(file = stderr)
+			exit_code = 1
+			close_all()
+			break
+
 		except Exception as e:
 			send(stderr, ERR, "encountered an exception while running", code = 1)
 			traceback.print_exc(file = stderr)
@@ -354,54 +357,41 @@ def main(send, verbose = False, profile = False, debug = False):
 
 def parse_config_persistent(send, config):
 
-	exit_flag = False
 	try:
 		apikey = config["persistent"]["key"]["database"]
 	except:
-		send(stderr, ERR, "database key field in config must be present", code = 111)
-		exit_flag = True
+		raise ConfigurationError("persistent/key/database field is invalid or missing", 111)
 	try:
 		tbakey = config["persistent"]["key"]["tba"]
 	except:
-		send(stderr, ERR, "tba key field in config must be present", code = 112)
-		exit_flag = True
+		raise ConfigurationError("persistent/key/tba field is invalid or missing", 112)
 	try:
 		preference = config["persistent"]["config-preference"]
 	except:
-		send(stderr, ERR, "config-preference field in config must be present", code = 113)
-		exit_flag = True
+		raise ConfigurationError("persistent/config-preference field is invalid or missing", 113)
 	try:
 		sync = config["persistent"]["synchronize-config"]
 	except:
-		send(stderr, ERR, "synchronize-config field in config must be present", code = 114)
-		exit_flag = True
+		raise ConfigurationError("persistent/synchronize-config field is invalid or missing", 114)
 
 	if apikey == None or apikey == "":
-		send(stderr, ERR, "database key field in config must not be empty, please populate the database key", code = 115)
-		exit_flag = True
+		raise ConfigurationError("persistent/key/database field is empty", 115)
 	if tbakey == None or tbakey == "":
-		send(stderr, ERR, "tba key field in config must not be empty, please populate the tba key", code = 116)
-		exit_flag = True
+		raise ConfigurationError("persistent/key/tba field is empty", 116)
 	if preference == None or preference == "":
-		send(stderr, ERR, "config-preference field in config must not be empty, please populate config-preference", code = 117)
-		exit_flag = True
+		raise ConfigurationError("persistent/config-preference field is empty", 117)
 	if sync != True and sync != False:
-		send(stderr, ERR, "synchronize-config field in config must be a boolean, please populate synchronize-config", code = 118)
-		exit_flag = True
+		raise ConfigurationError("persistent/synchronize-config field is empty", 118)
 
-	return exit_flag, apikey, tbakey, preference, sync
+	return apikey, tbakey, preference, sync
 
 def parse_config_variable(send, config):
-
-	exit_flag = False
 
 	sys_max_threads = os.cpu_count()
 	try:
 		cfg_max_threads = config["variable"]["max-threads"]
 	except:
-		send(stderr, ERR, "max-threads field in config must not be empty, refer to documentation for configuration options", code = 109)
-		exit_flag = True
-
+		raise ConfigurationError("variable/max-threads field is invalid or missing, refer to documentation for configuration options", 109)
 	if cfg_max_threads > -sys_max_threads and cfg_max_threads < 0 :
 		alloc_processes = sys_max_threads + cfg_max_threads
 	elif cfg_max_threads > 0 and cfg_max_threads < 1:
@@ -411,38 +401,31 @@ def parse_config_variable(send, config):
 	elif cfg_max_threads == 0:
 		alloc_processes = sys_max_threads
 	else:
-		send(stderr, ERR, "max-threads must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads) + ", but got " + cfg_max_threads, code = 110)
-		exit_flag = True
-
+		raise ConfigurationError("variable/max-threads must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads) + ", but got " + cfg_max_threads, 110)
 	try:
 		exec_threads = Pool(processes = alloc_processes)
 	except Exception as e:
-		send(stderr, ERR, "unable to start threads", code = 200)
 		send(stderr, INF, e)
-		exit_flag = True
+		raise ConfigurationError("unable to start threads", 200)
 	send(stdout, INF, "successfully initialized " + str(alloc_processes) + " threads")
 
 	try:
 		competition = config["variable"]["competition"]
 	except:
-		send(stderr, ERR, "could not find competition field in config", code = 101)
-		exit_flag = True
+		raise ConfigurationError("variable/competition field is invalid or missing", 101)
 	try:
 		modules = config["variable"]["modules"]
 	except:
-		send(stderr, ERR, "could not find modules field in config", code = 102)
-		exit_flag = True
+		raise ConfigurationError("variable/modules field is invalid or missing", 102)
 
 	if competition == None or competition == "":
-		send(stderr, ERR, "competition field in config must not be empty", code = 105)
-		exit_flag = True
+		raise ConfigurationError("variable/competition field is empty", 105)
 	if modules == None:
-		send(stderr, ERR, "modules  in config must not be empty", code = 106)
-		exit_flag = True
+		raise ConfigurationError("variable/modules field is empty", 106)
 
 	send(stdout, INF, "found and loaded competition, match, metrics, pit from config")
 
-	return exit_flag, exec_threads, competition, modules
+	return exec_threads, competition, modules
 
 def resolve_config_conflicts(send, client, config, preference, sync):
 
@@ -453,34 +436,28 @@ def resolve_config_conflicts(send, client, config, preference, sync):
 			if remote_config != config["variable"]:
 				set_database_config(client, config["variable"])
 				send(stdout, INF, "database config was different and was updated")
-			return
+			return config
 		elif preference == "remote" or preference == "database":
 			send(stdout, INF, "config-preference set to remote/database, loading remote config information")
 			remote_config= get_database_config(client)
 			if remote_config != config["variable"]:
 				config["variable"] = remote_config
 				if save_config(config_path, config):
-					send(stderr, ERR, "local config was different but could not be updated")
-					config = 1
-					return
+					raise ConfigurationError("local config was different but could not be updated", 121)
 				send(stdout, INF, "local config was different and was updated")
-			return
+			return config
 		else:
-			send(stderr, ERR, "config-preference field in config must be \"local\"/\"client\" or \"remote\"/\"database\"")
-			config = 1
-			return
+			raise ConfigurationError("persistent/config-preference field must be \"local\"/\"client\" or \"remote\"/\"database\"", 120)
 	else:
 		if preference == "local" or preference == "client":
 			send(stdout, INF, "config-preference set to local/client, loading local config information")
-			return
+			return config
 		elif preference == "remote" or preference == "database":
 			send(stdout, INF, "config-preference set to remote/database, loading database config information")
 			config["variable"] = get_database_config(client)
-			return
+			return config
 		else:
-			send(stderr, ERR, "config-preference field in config must be \"local\"/\"client\" or \"remote\"/\"database\"")
-			config = 1
-			return
+			raise ConfigurationError("persistent/config-preference field must be \"local\"/\"client\" or \"remote\"/\"database\"", 120)
 
 def load_config(path, config_vector):
 	try:
