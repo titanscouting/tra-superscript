@@ -13,28 +13,16 @@ def pull_new_tba_matches(apikey, competition, cutoff):
 	return out
 
 def get_team_match_data(apikey, competition, team_num):
-	client = pymongo.MongoClient(apikey)
-	db = client.data_scouting
-	mdata = db.matchdata
-	out = {}
-	for i in mdata.find({"competition" : competition, "team_scouted": team_num}):
-		out[i['match']] = i['data']
+	out = requests.get("/api/fetchAllTeamMatchData", headers = {"competition" : competition, "team_scouted" : team_num, "api_key" : apikey}).json()
 	return pd.DataFrame(out)
 
 def get_team_pit_data(apikey, competition, team_num):
-	client = pymongo.MongoClient(apikey)
-	db = client.data_scouting
-	mdata = db.pitdata
-	out = {}
-	return mdata.find_one({"competition" : competition, "team_scouted": team_num})["data"]
+	return requests.get("/api/fetchAllTeamPitData", headers = {"competition" : competition, "team_scouted" : team_num, "api_key" : apikey}).json()
 
 def get_team_metrics_data(apikey, competition, team_num):
-	client = pymongo.MongoClient(apikey)
-	db = client.data_processing
-	mdata = db.team_metrics
-	return mdata.find_one({"competition" : competition, "team": team_num})
+	return requests.get("/api/fetchMetricsData", headers = {"competition" : competition, "team" : team_num, "api_key" : apikey}).json()
 
-def get_match_data_formatted(apikey, competition):
+def get_match_data_formatted(apikey, competition): #need help with this one
 	client = pymongo.MongoClient(apikey)
 	db = client.data_scouting
 	mdata = db.teamlist
@@ -47,7 +35,7 @@ def get_match_data_formatted(apikey, competition):
 			pass
 	return out
 
-def get_metrics_data_formatted(apikey, competition):
+def get_metrics_data_formatted(apikey, competition): #need help with this one
 	client = pymongo.MongoClient(apikey)
 	db = client.data_scouting
 	mdata = db.teamlist
@@ -60,7 +48,7 @@ def get_metrics_data_formatted(apikey, competition):
 			pass
 	return out
 
-def get_pit_data_formatted(apikey, competition):
+def get_pit_data_formatted(apikey, competition): #need help with this one
 	client = pymongo.MongoClient(apikey)
 	db = client.data_scouting
 	mdata = db.teamlist
@@ -74,11 +62,7 @@ def get_pit_data_formatted(apikey, competition):
 	return out
 
 def get_pit_variable_data(apikey, competition):
-	client = pymongo.MongoClient(apikey)
-	db = client.data_processing
-	mdata = db.team_pit
-	out = {}
-	return mdata.find()
+	return requests.get("/api/fetchPitVariableData", headers = {"competition" : competition, "api_key" : apikey}).json()
 
 def get_pit_variable_formatted(apikey, competition):
 	temp = get_pit_variable_data(apikey, competition)
@@ -87,35 +71,20 @@ def get_pit_variable_formatted(apikey, competition):
 		out[i["variable"]] = i["data"]
 	return out
 
-def push_team_tests_data(apikey, competition, team_num, data, dbname = "data_processing", colname = "team_tests"):
-	client = pymongo.MongoClient(apikey)
-	db = client[dbname]
-	mdata = db[colname]
-	mdata.replace_one({"competition" : competition, "team": team_num}, {"_id": competition+str(team_num)+"am", "competition" : competition, "team" : team_num, "data" : data}, True)
+def push_team_tests_data(apikey, competition, team_num, data):
+	requests.post("/api/submitTeamTestsData", headers = {"competition" : competition, "team" : team_num, "api_key" : apikey}, json=data)
 
-def push_team_metrics_data(apikey, competition, team_num, data, dbname = "data_processing", colname = "team_metrics"):
-	client = pymongo.MongoClient(apikey)
-	db = client[dbname]
-	mdata = db[colname]
-	mdata.replace_one({"competition" : competition, "team": team_num}, {"_id": competition+str(team_num)+"am", "competition" : competition, "team" : team_num, "metrics" : data}, True)
+def push_team_metrics_data(apikey, competition, team_num, data):
+	requests.post("/api/submitTeamMetricsData", headers = {"competition" : competition, "team" : team_num, "api_key" : apikey}, json=data)
 
-def push_team_pit_data(apikey, competition, variable, data, dbname = "data_processing", colname = "team_pit"):
-	client = pymongo.MongoClient(apikey)
-	db = client[dbname]
-	mdata = db[colname]
-	mdata.replace_one({"competition" : competition, "variable": variable}, {"competition" : competition, "variable" : variable, "data" : data}, True)
+def push_team_pit_data(apikey, competition, team_num, data):
+	requests.post("/api/submitTeamPitData", headers = {"competition" : competition, "team" : team_num, "api_key" : apikey}, json=data)
 
 def get_analysis_flags(apikey, flag):
-	client = pymongo.MongoClient(apikey)
-	db = client.data_processing
-	mdata = db.flags
-	return mdata.find_one({flag:{"$exists":True}})
+	return requests.get("/api/fetchAnalysisFlags", headers = {"flag" : flag, "api_key" : apikey}).json()
 
 def set_analysis_flags(apikey, flag, data):
-	client = pymongo.MongoClient(apikey)
-	db = client.data_processing
-	mdata = db.flags
-	return mdata.replace_one({flag:{"$exists":True}}, data, True)
+	requests.post("/api/setAnalysisFlags", headers = {"flag" : flag, "api_key" : apikey}, json=data)
 
 def unkeyify_2l(layered_dict):
 	out = {}
