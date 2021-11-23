@@ -223,9 +223,7 @@ def main(send, verbose = False, profile = False, debug = False):
 					valid = current_module.validate_config()
 					if not valid:
 						continue
-					current_module.load_data()
-					current_module.process_data(exec_threads)
-					current_module.push_results()
+					current_module.run(exec_threads)
 					send(stdout, INF, m + " module finished in " + str(time.time() - start) + " seconds")
 					if debug:
 						f = open(m + ".log", "w+")
