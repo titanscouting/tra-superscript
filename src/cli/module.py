@@ -8,19 +8,23 @@ class Module(metaclass = abc.ABCMeta):
 
 	@classmethod
 	def __subclasshook__(cls, subclass):
-		return (hasattr(subclass, 'validate_config') and 
-				callable(subclass.validate_config) and 
-				hasattr(subclass, 'load_data') and 
-				callable(subclass.load_data) and
-				hasattr(subclass, 'process_data') and 
-				callable(subclass.process_data) and 
-				hasattr(subclass, 'push_results') and 
-				callable(subclass.push_results)
+		return (hasattr(subclass, '__init__') and 
+				callable(subclass.__init__) and 
+				hasattr(subclass, 'validate_config') and 
+				callable(subclass.validate_config) and
+				hasattr(subclass, 'run') and 
+				callable(subclass.run)
 				)
-
 	@abc.abstractmethod
-	def validate_config(self):
+	def __init__(self, config, apikey, tbakey, timestamp, competition, *args, **kwargs):
 		raise NotImplementedError
+	@abc.abstractmethod
+	def validate_config(self, *args, **kwargs):
+		raise NotImplementedError
+	@abc.abstractmethod
+	def run(self, exec_threads, *args, **kwargs):
+		raise NotImplementedError
+	"""
 	@abc.abstractmethod
 	def load_data(self):
 		raise NotImplementedError
@@ -29,7 +33,7 @@ class Module(metaclass = abc.ABCMeta):
 		raise NotImplementedError
 	@abc.abstractmethod
 	def push_results(self):
-		raise NotImplementedError
+		raise NotImplementedError"""
 
 class Match (Module):
 
@@ -52,10 +56,15 @@ class Match (Module):
 	def validate_config(self):
 		return True, ""
 
-	def load_data(self):
+	def run(self, exec_threads):
+		self._load_data()
+		self._process_data(exec_threads)
+		self._push_results()
+
+	def _load_data(self):
 		self.data = d.load_match(self.apikey, self.competition)
 
-	def simplestats(data_test):
+	def _simplestats(data_test):
 
 		signal.signal(signal.SIGINT, signal.SIG_IGN)
 
@@ -86,7 +95,7 @@ class Match (Module):
 		if test == "regression_sigmoidal":
 			return an.regression(ranges, data, ['sig'])
 
-	def process_data(self, exec_threads):
+	def _process_data(self, exec_threads):
 
 		tests = self.config["tests"]
 		data = self.data
@@ -104,9 +113,9 @@ class Match (Module):
 						input_vector.append((team, variable, test, data[team][variable]))
 
 		self.data = input_vector
-		self.results = list(exec_threads.map(self.simplestats, self.data))
+		self.results = list(exec_threads.map(self._simplestats, self.data))
 
-	def push_results(self):
+	def _push_results(self):
 
 		short_mapping = {"regression_linear": "lin", "regression_logarithmic": "log", "regression_exponential": "exp", "regression_polynomial": "ply", "regression_sigmoidal": "sig"}
 
@@ -162,10 +171,15 @@ class Metric (Module):
 	def validate_config(self):
 		return True, ""
 
-	def load_data(self):
+	def run(self, exec_threads):
+		self._load_data()
+		self._process_data(exec_threads)
+		self._push_results()
+
+	def _load_data(self):
 		self.data = d.pull_new_tba_matches(self.tbakey, self.competition, self.timestamp)
 
-	def process_data(self, exec_threads):
+	def _process_data(self, exec_threads):
 
 		elo_N = self.config["tests"]["elo"]["N"]
 		elo_K = self.config["tests"]["elo"]["K"]
@@ -258,7 +272,7 @@ class Metric (Module):
 
 			d.push_metric(self.client, self.competition, temp_vector)
 
-	def push_results(self):
+	def _push_results(self):
 		pass
 
 class Pit (Module):
@@ -282,10 +296,15 @@ class Pit (Module):
 	def validate_config(self):
 		return True, ""
 
-	def load_data(self):
+	def run(self, exec_threads):
+		self._load_data()
+		self._process_data(exec_threads)
+		self._push_results()
+
+	def _load_data(self):
 		self.data = d.load_pit(self.apikey, self.competition)
 
-	def process_data(self, exec_threads):
+	def _process_data(self, exec_threads):
 		return_vector = {}
 		for team in self.data:
 			for variable in self.data[team]:
@@ -296,7 +315,7 @@ class Pit (Module):
 
 		self.results = return_vector
 
-	def push_results(self):
+	def _push_results(self):
 		d.push_pit(self.apikey, self.competition, self.results)
 
 class Rating (Module):
