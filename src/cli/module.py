@@ -24,16 +24,6 @@ class Module(metaclass = abc.ABCMeta):
 	@abc.abstractmethod
 	def run(self, exec_threads, *args, **kwargs):
 		raise NotImplementedError
-	"""
-	@abc.abstractmethod
-	def load_data(self):
-		raise NotImplementedError
-	@abc.abstractmethod
-	def process_data(self, exec_threads):
-		raise NotImplementedError
-	@abc.abstractmethod
-	def push_results(self):
-		raise NotImplementedError"""
 
 class Match (Module):
 
