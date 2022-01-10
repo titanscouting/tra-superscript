@@ -2,6 +2,7 @@ import math
 import json
 from multiprocessing import Pool
 import os
+from cerberus import Validator
 
 from data import set_database_config, get_database_config
 from interface import stderr, stdout, INF, ERR
@@ -140,32 +141,16 @@ class ConfigurationError (Exception):
 		self.code = code
 
 def parse_config_persistent(send, config):
+	v = Validator(load_validation_schema(), allow_unknown = True)
+	isValidated = v.validate(config)
 
-	try:
-		apikey = config["persistent"]["key"]["database"]
-	except:
-		raise ConfigurationError("persistent/key/database field is invalid or missing", 111)
-	try:
-		tbakey = config["persistent"]["key"]["tba"]
-	except:
-		raise ConfigurationError("persistent/key/tba field is invalid or missing", 112)
-	try:
-		preference = config["persistent"]["config-preference"]
-	except:
-		raise ConfigurationError("persistent/config-preference field is invalid or missing", 113)
-	try:
-		sync = config["persistent"]["synchronize-config"]
-	except:
-		raise ConfigurationError("persistent/synchronize-config field is invalid or missing", 114)
+	if not isValidated:
+		raise ConfigurationError(v.errors, 101)
 
-	if apikey == None or apikey == "":
-		raise ConfigurationError("persistent/key/database field is empty", 115)
-	if tbakey == None or tbakey == "":
-		raise ConfigurationError("persistent/key/tba field is empty", 116)
-	if preference == None or preference == "":
-		raise ConfigurationError("persistent/config-preference field is empty", 117)
-	if sync != True and sync != False:
-		raise ConfigurationError("persistent/synchronize-config field is empty", 118)
+	apikey = config["persistent"]["key"]["database"]
+	tbakey = config["persistent"]["key"]["tba"]
+	preference = config["persistent"]["config-preference"]
+	sync = config["persistent"]["synchronize-config"]
 
 	return apikey, tbakey, preference, sync
 
@@ -248,6 +233,13 @@ def load_config(path, config_vector):
 		f.write(sample_json)
 		f.close()
 		return 1
+
+def load_validation_schema():
+	try:
+		with open("validation-schema.json", "r") as f:
+			return json.load(f)
+	except:
+		raise FileNotFoundError("Validation schema not found at validation-schema.json")
 
 def save_config(path, config_vector):
 	f = open(path, "w+")
