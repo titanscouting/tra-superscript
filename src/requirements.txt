@@ -15,3 +15,5 @@ kivy==2.0.0rc2
 
 pyzmq
 python-daemon
+
+cerebrus

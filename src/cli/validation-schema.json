@@ -1,0 +1,26 @@
+{
+  "persistent": {
+    "type": "dict",
+    "require_all": true,
+    "schema": {
+      "key": {
+        "type": "dict",
+        "require_all":true,
+        "schema": {
+          "database": {"type":"string"},
+          "tba": {"type": "string"},
+          "tra": {
+            "type": "dict",
+            "require_all": true,
+            "schema": {
+              "CLIENT_ID": {"type": "string"},
+              "CLIENT_SECRET": {"type": "string"}
+            }
+          }
+        }
+      },
+      "config-preference": {"type": "string", "required": true},
+      "synchronize-config": {"type": "boolean", "required": true}
+    }
+  }
+}
