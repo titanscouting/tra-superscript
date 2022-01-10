@@ -8,76 +8,130 @@ from interface import stderr, stdout, INF, ERR
 
 config_path = "config.json"
 
-sample_json = """{
-	"persistent":{
-		"key":{
-			"database":"",
-			"tba":""
-		},
-		"config-preference":"local",
-		"synchronize-config":false
-	},
-	"variable":{
-
-		"max-threads":0.5,
-
-		"competition":"",
-		"team":"",
-		
-		"event-delay":false,
-		"loop-delay":0,
-		"reportable":true,
-
-		"teams":[],
-
-		"modules":{
-
-			"match":{
-				"tests":{
-					"balls-blocked":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-					"balls-collected":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-					"balls-lower-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-					"balls-lower-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-					"balls-started":["basic_stats","historical_analyss","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-					"balls-upper-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
-					"balls-upper-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"]
-				}
-
-			},
-
-			"metric":{
-				"tests":{
-					"elo":{
-						"score":1500,
-						"N":400,
-						"K":24
-					},
-					"gl2":{
-						"score":1500,
-						"rd":250,
-						"vol":0.06
-					},
-					"ts":{
-						"mu":25,
-						"sigma":8.33
-					}
-				}
-			},
-
-			"pit":{
-				"tests":{
-					"wheel-mechanism":true,
-					"low-balls":true,
-					"high-balls":true,
-					"wheel-success":true,
-					"strategic-focus":true,
-					"climb-mechanism":true,
-					"attitude":true
-				}
-			}
-		}
-	}
-}"""
+sample_json = """
+{
+   "persistent":{
+      "key":{
+         "database":"",
+         "tba":"",
+         "tra":{
+            "CLIENT_ID":"",
+            "CLIENT_SECRET":""
+         }
+      },
+      "config-preference":"local",
+      "synchronize-config":false
+   },
+   "variable":{
+      "max-threads":0.5,
+      "team":"",
+      "event-delay":false,
+      "loop-delay":0,
+      "reportable":true,
+      "teams":[
+         
+      ],
+      "modules":{
+         "match":{
+            "tests":{
+               "balls-blocked":[
+                  "basic_stats",
+                  "historical_analysis",
+                  "regression_linear",
+                  "regression_logarithmic",
+                  "regression_exponential",
+                  "regression_polynomial",
+                  "regression_sigmoidal"
+               ],
+               "balls-collected":[
+                  "basic_stats",
+                  "historical_analysis",
+                  "regression_linear",
+                  "regression_logarithmic",
+                  "regression_exponential",
+                  "regression_polynomial",
+                  "regression_sigmoidal"
+               ],
+               "balls-lower-teleop":[
+                  "basic_stats",
+                  "historical_analysis",
+                  "regression_linear",
+                  "regression_logarithmic",
+                  "regression_exponential",
+                  "regression_polynomial",
+                  "regression_sigmoidal"
+               ],
+               "balls-lower-auto":[
+                  "basic_stats",
+                  "historical_analysis",
+                  "regression_linear",
+                  "regression_logarithmic",
+                  "regression_exponential",
+                  "regression_polynomial",
+                  "regression_sigmoidal"
+               ],
+               "balls-started":[
+                  "basic_stats",
+                  "historical_analyss",
+                  "regression_linear",
+                  "regression_logarithmic",
+                  "regression_exponential",
+                  "regression_polynomial",
+                  "regression_sigmoidal"
+               ],
+               "balls-upper-teleop":[
+                  "basic_stats",
+                  "historical_analysis",
+                  "regression_linear",
+                  "regression_logarithmic",
+                  "regression_exponential",
+                  "regression_polynomial",
+                  "regression_sigmoidal"
+               ],
+               "balls-upper-auto":[
+                  "basic_stats",
+                  "historical_analysis",
+                  "regression_linear",
+                  "regression_logarithmic",
+                  "regression_exponential",
+                  "regression_polynomial",
+                  "regression_sigmoidal"
+               ]
+            }
+         },
+         "metric":{
+            "tests":{
+               "elo":{
+                  "score":1500,
+                  "N":400,
+                  "K":24
+               },
+               "gl2":{
+                  "score":1500,
+                  "rd":250,
+                  "vol":0.06
+               },
+               "ts":{
+                  "mu":25,
+                  "sigma":8.33
+               }
+            }
+         },
+         "pit":{
+            "tests":{
+               "wheel-mechanism":true,
+               "low-balls":true,
+               "high-balls":true,
+               "wheel-success":true,
+               "strategic-focus":true,
+               "climb-mechanism":true,
+               "attitude":true
+            }
+         }
+      }
+   }
+}
+"""
 
 class ConfigurationError (Exception):
 	code = None
@@ -140,22 +194,16 @@ def parse_config_variable(send, config):
 	send(stdout, INF, "successfully initialized " + str(alloc_processes) + " threads")
 
 	try:
-		competition = config["variable"]["competition"]
-	except:
-		raise ConfigurationError("variable/competition field is invalid or missing", 101)
-	try:
 		modules = config["variable"]["modules"]
 	except:
 		raise ConfigurationError("variable/modules field is invalid or missing", 102)
 
-	if competition == None or competition == "":
-		raise ConfigurationError("variable/competition field is empty", 105)
 	if modules == None:
 		raise ConfigurationError("variable/modules field is empty", 106)
 
 	send(stdout, INF, "found and loaded competition, match, metrics, pit from config")
 
-	return exec_threads, competition, modules
+	return exec_threads, modules
 
 def resolve_config_conflicts(send, client, config, preference, sync):
 
