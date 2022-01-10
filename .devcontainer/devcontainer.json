@@ -16,9 +16,9 @@
 		"python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
 		"python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
 		"python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
-		"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
+		"python.linting.pylintPath": "/usr/local/bin/pylint",
 		"python.testing.pytestPath": "/usr/local/py-utils/bin/pytest",
-    "editor.tabSize": 2,
+    "editor.tabSize": 4,
     "editor.insertSpaces": false
 	},
 	"extensions": [
