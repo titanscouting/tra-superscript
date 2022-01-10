@@ -2,7 +2,7 @@ import abc
 import data as d
 import signal
 import numpy as np
-import tra_analysis as an
+from tra_analysis import Analysis as an
 
 class Module(metaclass = abc.ABCMeta):
 
@@ -54,7 +54,7 @@ class Match (Module):
 	def _load_data(self):
 		self.data = d.load_match(self.apikey, self.competition)
 
-	def _simplestats(data_test):
+	def _simplestats(self, data_test):
 
 		signal.signal(signal.SIGINT, signal.SIG_IGN)
 
@@ -103,7 +103,10 @@ class Match (Module):
 						input_vector.append((team, variable, test, data[team][variable]))
 
 		self.data = input_vector
-		self.results = list(exec_threads.map(self._simplestats, self.data))
+		#self.results = list(exec_threads.map(self._simplestats, self.data))
+		self.results = []
+		for test_var_data in self.data:
+			self.results.append(self._simplestats(test_var_data))
 
 	def _push_results(self):
 

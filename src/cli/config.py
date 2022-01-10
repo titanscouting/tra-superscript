@@ -3,6 +3,7 @@ import json
 from multiprocessing import Pool
 import os
 from cerberus import Validator
+from exceptions import ConfigurationError
 
 from data import set_database_config, get_database_config
 from interface import stderr, stdout, INF, ERR
@@ -133,12 +134,6 @@ sample_json = """
    }
 }
 """
-
-class ConfigurationError (Exception):
-	code = None
-	def __init__(self, str, code):
-		super().__init__(str)
-		self.code = code
 
 def parse_config_persistent(send, config):
 	v = Validator(load_validation_schema(), allow_unknown = True)
