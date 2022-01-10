@@ -160,7 +160,7 @@ import time
 import traceback
 import warnings
 import zmq
-
+import pull
 from config import parse_config_persistent, parse_config_variable, resolve_config_conflicts, load_config, save_config, ConfigurationError
 from data import get_previous_time, set_current_time, check_new_database_matches
 from interface import splash, log, ERR, INF, stdout, stderr
@@ -214,8 +214,8 @@ def main(send, verbose = False, profile = False, debug = False):
 
 			config = resolve_config_conflicts(send, client, config, preference, sync)
 
-			exec_threads, competition, config_modules = parse_config_variable(send, config)
-
+			exec_threads, config_modules = parse_config_variable(send, config)
+			competition = pull.get_team_competition()
 			for m in config_modules:
 				if m in modules:
 					start = time.time()

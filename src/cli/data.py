@@ -1,4 +1,6 @@
 import requests
+import pull
+import pandas as pd
 
 def pull_new_tba_matches(apikey, competition, cutoff):
 	api_key= apikey 
@@ -13,7 +15,7 @@ def get_team_match_data(client, competition, team_num):
 	db = client.data_scouting
 	mdata = db.matchdata
 	out = {}
-	for i in mdata.find({"competition" : competition, "team_scouted": team_num}):
+	for i in mdata.find({"competition" : competition, "team_scouted": str(team_num)}):
 		out[i['match']] = i['data']
 	return pd.DataFrame(out)
 
@@ -21,7 +23,7 @@ def get_team_pit_data(client, competition, team_num):
 	db = client.data_scouting
 	mdata = db.pitdata
 	out = {}
-	return mdata.find_one({"competition" : competition, "team_scouted": team_num})["data"]
+	return mdata.find_one({"competition" : competition, "team_scouted": str(team_num)})["data"]
 
 def get_team_metrics_data(client, competition, team_num):
 	db = client.data_processing
@@ -29,25 +31,21 @@ def get_team_metrics_data(client, competition, team_num):
 	return mdata.find_one({"competition" : competition, "team": team_num})
 
 def get_match_data_formatted(client, competition):
-	db = client.data_scouting
-	mdata = db.teamlist
-	x=mdata.find_one({"competition":competition})
+	teams_at_comp = pull.get_teams_at_competition(competition)
 	out = {}
-	for i in x:
+	for team in teams_at_comp:
 		try:
-			out[int(i)] = unkeyify_2l(get_team_match_data(client, competition, int(i)).transpose().to_dict())
+			out[int(team)] = unkeyify_2l(get_team_match_data(client, competition, team).transpose().to_dict())
 		except:
 			pass
 	return out
 
 def get_metrics_data_formatted(client, competition):
-	db = client.data_scouting
-	mdata = db.teamlist
-	x=mdata.find_one({"competition":competition})
+	teams_at_comp = pull.get_teams_at_competition(competition)
 	out = {}
-	for i in x:
+	for team in teams_at_comp:
 		try:
-			out[int(i)] = get_team_metrics_data(client, competition, int(i))
+			out[int(team)] = get_team_metrics_data(client, competition, int(team))
 		except:
 			pass
 	return out
