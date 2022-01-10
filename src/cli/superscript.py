@@ -215,7 +215,10 @@ def main(send, verbose = False, profile = False, debug = False):
 			config = resolve_config_conflicts(send, client, config, preference, sync)
 
 			exec_threads, config_modules = parse_config_variable(send, config)
-			competition = pull.get_team_competition()
+			if 'competition' in config['variable']:
+				competition = config['variable']['competition']
+			else:
+				competition = pull.get_team_competition()
 			for m in config_modules:
 				if m in modules:
 					start = time.time()
