@@ -18,7 +18,8 @@ sample_json = """
          "tba":"",
          "tra":{
             "CLIENT_ID":"",
-            "CLIENT_SECRET":""
+            "CLIENT_SECRET":"",
+			"url": ""
          }
       },
       "config-preference":"local",
