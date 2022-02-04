@@ -298,10 +298,12 @@ class Pit (Module):
 		self.data = d.load_pit(self.apikey, self.competition)
 
 	def _process_data(self, exec_threads):
+		tests = self.config["tests"]
+		print(tests)
 		return_vector = {}
 		for team in self.data:
 			for variable in self.data[team]:
-				if variable in self.config:
+				if variable in tests:
 					if not variable in return_vector:
 						return_vector[variable] = []
 					return_vector[variable].append(self.data[team][variable])
