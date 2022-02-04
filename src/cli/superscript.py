@@ -210,7 +210,8 @@ def main(send, verbose = False, profile = False, debug = False):
 			client = pymongo.MongoClient(apikey)
 
 			send(stdout, INF, "established connection to database")
-			send(stdout, INF, "analysis backtimed to: " + str(get_previous_time(client)))
+			previous_time = get_previous_time(client)
+			send(stdout, INF, "analysis backtimed to: " + str(previous_time))
 
 			config = resolve_config_conflicts(send, client, config, preference, sync)
 
@@ -222,7 +223,7 @@ def main(send, verbose = False, profile = False, debug = False):
 			for m in config_modules:
 				if m in modules:
 					start = time.time()
-					current_module = modules[m](config_modules[m], client, tbakey, loop_start, competition)
+					current_module = modules[m](config_modules[m], client, tbakey, previous_time, competition)
 					valid = current_module.validate_config()
 					if not valid:
 						continue

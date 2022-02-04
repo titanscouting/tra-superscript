@@ -4,7 +4,7 @@ import pandas as pd
 
 def pull_new_tba_matches(apikey, competition, cutoff):
 	api_key= apikey 
-	x=requests.get("https://www.thebluealliance.com/api/v3/event/"+competition+"/matches/simple", headers={"X-TBA-Auth_Key":api_key}, verify=False)
+	x=requests.get("https://www.thebluealliance.com/api/v3/event/"+competition+"/matches/simple", headers={"X-TBA-Auth-Key":api_key}, verify=False)
 	out = []
 	for i in x.json():
 		if i["actual_time"] != None and i["actual_time"]-cutoff >= 0 and i["comp_level"] == "qm":
@@ -52,8 +52,9 @@ def get_metrics_data_formatted(client, competition):
 
 def get_pit_data_formatted(client, competition):
 	db = client.data_scouting
-	mdata = db.teamlist
-	x=mdata.find_one({"competition":competition})
+	mdata = db.teamlist.competition
+	x=mdata.find_one({"competition":competition}) # x should be a list of teams given the soecified competition
+	print(x)
 	out = {}
 	for i in x:
 		try:
@@ -155,7 +156,7 @@ def load_metric(client, competition, match, group_name, metrics):
 
 			elo = {"score": metrics["elo"]["score"]}
 			gl2 = {"score": metrics["gl2"]["score"], "rd": metrics["gl2"]["rd"], "vol": metrics["gl2"]["vol"]}
-			ts = {"mu": metrics["ts"]["mu"], "sigm+a": metrics["ts"]["sigma"]}
+			ts = {"mu": metrics["ts"]["mu"], "sigma": metrics["ts"]["sigma"]}
 
 			group[team] = {"elo": elo, "gl2": gl2, "ts": ts}
 
