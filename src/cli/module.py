@@ -263,7 +263,7 @@ class Metric (Module):
 			temp_vector.update(red)
 			temp_vector.update(blu)
 
-			d.push_metric(self.client, self.competition, temp_vector)
+			d.push_metric(self.apikey, self.competition, temp_vector)
 
 	def _push_results(self):
 		pass
