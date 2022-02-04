@@ -52,9 +52,16 @@ def get_metrics_data_formatted(client, competition):
 
 def get_pit_data_formatted(client, competition):
 	x=requests.get("https://titanscouting.epochml.org/api/fetchAllTeamNicknamesAtCompetition?competition="+competition)
-	output = x.json()
-	data = output['data']
-	return list(data.keys())
+	x = x.json()
+	x = x['data']
+	x = x.keys()
+	out = {}
+	for i in x:
+		try:
+			out[int(i)] = get_team_pit_data(client, competition, int(i))
+		except:
+			pass
+	return out
 
 def get_pit_variable_data(client, competition):
 	db = client.data_processing
