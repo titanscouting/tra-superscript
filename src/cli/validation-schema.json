@@ -14,7 +14,8 @@
             "require_all": true,
             "schema": {
               "CLIENT_ID": {"type": "string"},
-              "CLIENT_SECRET": {"type": "string"}
+              "CLIENT_SECRET": {"type": "string"},
+			  "url": {"type": "string"}
             }
           }
         }
