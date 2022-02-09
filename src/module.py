@@ -299,7 +299,6 @@ class Pit (Module):
 
 	def _process_data(self, exec_threads):
 		tests = self.config["tests"]
-		print(tests)
 		return_vector = {}
 		for team in self.data:
 			for variable in self.data[team]:
