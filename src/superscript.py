@@ -168,7 +168,6 @@ def main(logger, verbose, profile, debug, socket_send = None):
 			client.close()
 
 	warnings.filterwarnings("ignore")
-	exit_code = 0
 
 	logger.splash(__version__)
 
@@ -229,12 +228,10 @@ def main(logger, verbose, profile, debug, socket_send = None):
 			socket_send("finished all tasks in " + str(time.time() - loop_start) + " seconds, looping")
 
 			if profile:
-				exit_code = 0
-				break
+				return 0
 
 			if debug:
-				exit_code = 0
-				break
+				return 0
 
 			event_delay = config["variable"]["event-delay"]
 			if event_delay:
@@ -258,7 +255,7 @@ def main(logger, verbose, profile, debug, socket_send = None):
 			close_all()
 			logger.info("detected KeyboardInterrupt, exiting")
 			socket_send("detected KeyboardInterrupt, exiting")
-			break
+			return 0
 
 		except ConfigurationError as e:
 			str_e = "".join(traceback.format_exception(e))
@@ -266,9 +263,8 @@ def main(logger, verbose, profile, debug, socket_send = None):
 			logger.error(str_e)
 			socket_send("encountered a configuration error: " + str(e))
 			socket_send(str_e)
-			exit_code = 1
 			close_all()
-			break
+			return 1
 
 		except Exception as e:
 			str_e = "".join(traceback.format_exception(e))
@@ -276,11 +272,8 @@ def main(logger, verbose, profile, debug, socket_send = None):
 			logger.error(str_e)
 			socket_send("encountered an exception while running")
 			socket_send(str_e)
-			exit_code = 1
 			close_all()
-			break
-	
-	return exit_code
+			return 1
 
 def start(pid_path, verbose, profile, debug):
 
