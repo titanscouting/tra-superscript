@@ -1,7 +1,7 @@
 import requests 
 import json
 from exceptions import APIError
-from config import load_config
+from dep import load_config
 
 url = "https://titanscouting.epochml.org"
 config_tra = {}

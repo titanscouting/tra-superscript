@@ -22,7 +22,7 @@ class Module(metaclass = abc.ABCMeta):
 	def validate_config(self, *args, **kwargs):
 		raise NotImplementedError
 	@abc.abstractmethod
-	def run(self, exec_threads, *args, **kwargs):
+	def run(self, *args, **kwargs):
 		raise NotImplementedError
 
 class Match (Module):
@@ -46,9 +46,9 @@ class Match (Module):
 	def validate_config(self):
 		return True, ""
 
-	def run(self, exec_threads):
+	def run(self):
 		self._load_data()
-		self._process_data(exec_threads)
+		self._process_data()
 		self._push_results()
 
 	def _load_data(self):
@@ -85,7 +85,7 @@ class Match (Module):
 		if test == "regression_sigmoidal":
 			return an.regression(ranges, data, ['sig'])
 
-	def _process_data(self, exec_threads):
+	def _process_data(self):
 
 		tests = self.config["tests"]
 		data = self.data
@@ -103,7 +103,6 @@ class Match (Module):
 						input_vector.append((team, variable, test, data[team][variable]))
 
 		self.data = input_vector
-		#self.results = list(exec_threads.map(self._simplestats, self.data))
 		self.results = []
 		for test_var_data in self.data:
 			self.results.append(self._simplestats(test_var_data))
@@ -164,15 +163,15 @@ class Metric (Module):
 	def validate_config(self):
 		return True, ""
 
-	def run(self, exec_threads):
+	def run(self):
 		self._load_data()
-		self._process_data(exec_threads)
+		self._process_data()
 		self._push_results()
 
 	def _load_data(self):
 		self.data = d.pull_new_tba_matches(self.tbakey, self.competition, self.timestamp)
 
-	def _process_data(self, exec_threads):
+	def _process_data(self):
 
 		elo_N = self.config["tests"]["elo"]["N"]
 		elo_K = self.config["tests"]["elo"]["K"]
@@ -289,15 +288,15 @@ class Pit (Module):
 	def validate_config(self):
 		return True, ""
 
-	def run(self, exec_threads):
+	def run(self):
 		self._load_data()
-		self._process_data(exec_threads)
+		self._process_data()
 		self._push_results()
 
 	def _load_data(self):
 		self.data = d.load_pit(self.apikey, self.competition)
 
-	def _process_data(self, exec_threads):
+	def _process_data(self):
 		tests = self.config["tests"]
 		return_vector = {}
 		for team in self.data:

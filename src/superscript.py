@@ -23,6 +23,9 @@ __changelog__ = """changelog:
 			- config-preference option selects between prioritizing local config and prioritizing database config
 			- synchronize-config option selects whether to update the non prioritized config with the prioritized one
 			- divided config options between persistent ones (keys), and variable ones (everything else)
+		- generalized behavior of various core components by collecting loose functions in several dependencies into classes
+			- module.py contains classes, each one represents a single data analysis routine
+			- config.py contains the Configuration class, which stores the configuration information and abstracts the getter methods
 	0.9.3:
 		- improved data loading performance by removing redundant PyMongo client creation (120s to 14s)
 		- passed singular instance of PyMongo client as standin for apikey parameter in all data.py functions
@@ -152,16 +155,12 @@ __all__ = [
 # imports:
 
 import json
-from multiprocessing import freeze_support
-import os
-import pymongo
-import sys
-import time
+import os, sys, time
+import pymongo # soon to be deprecated
 import traceback
 import warnings
 import zmq
-import pull
-from config import parse_config_persistent, parse_config_variable, resolve_config_conflicts, load_config, save_config, ConfigurationError
+from config import Configuration, ConfigurationError
 from data import get_previous_time, set_current_time, check_new_database_matches
 from interface import splash, log, ERR, INF, stdout, stderr
 from module import Match, Metric, Pit
@@ -171,10 +170,6 @@ config_path = "config.json"
 def main(send, verbose = False, profile = False, debug = False):
 
 	def close_all():
-		if "exec_threads" in locals():
-			exec_threads.terminate()
-			exec_threads.join()
-			exec_threads.close()
 		if "client" in locals():
 			client.close()
 		if "f" in locals():
@@ -196,14 +191,11 @@ def main(send, verbose = False, profile = False, debug = False):
 
 			send(stdout, INF, "current time: " + str(loop_start))
 
-			config = {}
-
-			if load_config(config_path, config):
-				raise ConfigurationError("could not find config at <" + config_path + ">, generating blank config and exiting", 110)
+			config = Configuration(config_path)
 			
 			send(stdout, INF, "found and loaded config at <" + config_path + ">")
 
-			apikey, tbakey, preference, sync = parse_config_persistent(send, config)
+			apikey, tbakey = config.database, config.tba
 
 			send(stdout, INF, "found and loaded database and tba keys")
 
@@ -213,13 +205,10 @@ def main(send, verbose = False, profile = False, debug = False):
 			previous_time = get_previous_time(client)
 			send(stdout, INF, "analysis backtimed to: " + str(previous_time))
 
-			config = resolve_config_conflicts(send, client, config, preference, sync)
+			config.resolve_config_conflicts(send, client)
 
-			exec_threads, config_modules = parse_config_variable(send, config)
-			if 'competition' in config['variable']:
-				competition = config['variable']['competition']
-			else:
-				competition = pull.get_team_competition()
+			config_modules, competition = config.modules, config.competition
+
 			for m in config_modules:
 				if m in modules:
 					start = time.time()
@@ -227,7 +216,7 @@ def main(send, verbose = False, profile = False, debug = False):
 					valid = current_module.validate_config()
 					if not valid:
 						continue
-					current_module.run(exec_threads)
+					current_module.run()
 					send(stdout, INF, m + " module finished in " + str(time.time() - start) + " seconds")
 					if debug:
 						f = open(m + ".log", "w+")
@@ -360,7 +349,6 @@ def restart(pid_path):
 if __name__ == "__main__":
 
 	if sys.platform.startswith("win"):
-		freeze_support()
 		start(None, verbose = True)
 
 	else:
