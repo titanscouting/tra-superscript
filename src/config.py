@@ -3,7 +3,6 @@ from exceptions import ConfigurationError
 from cerberus import Validator
 
 from data import set_database_config, get_database_config
-from interface import stderr, stdout, INF, ERR
 
 class Configuration:
 
@@ -218,34 +217,34 @@ class Configuration:
 	def __getitem__(self, key):
 		return self.config[key]
 
-	def resolve_config_conflicts(self, send, client): # needs improvement with new localization scheme
+	def resolve_config_conflicts(self, logger, client): # needs improvement with new localization scheme
 		sync = self.sync
 		priority = self.priority
 
 		if sync:
 			if priority == "local" or priority == "client":
-				send(stdout, INF, "config-preference set to local/client, loading local config information")
+				logger.info("config-preference set to local/client, loading local config information")
 				remote_config = get_database_config(client)
 				if remote_config != self.config["variable"]:
 					set_database_config(client, self.config["variable"])
-					send(stdout, INF, "database config was different and was updated")
+					logger.info("database config was different and was updated")
 				# no change to config
 			elif priority == "remote" or priority == "database":
-				send(stdout, INF, "config-preference set to remote/database, loading remote config information")
+				logger.info("config-preference set to remote/database, loading remote config information")
 				remote_config = get_database_config(client)
 				if remote_config != self.config["variable"]:
 					self.config["variable"] = remote_config
 					self.save_config()
 					# change variable to match remote
-					send(stdout, INF, "local config was different and was updated")
+					logger.info("local config was different and was updated")
 			else:
 				raise ConfigurationError("persistent/config-preference field must be \"local\"/\"client\" or \"remote\"/\"database\"")
 		else:
 			if priority == "local" or priority == "client":
-				send(stdout, INF, "config-preference set to local/client, loading local config information")
+				logger.info("config-preference set to local/client, loading local config information")
 				# no change to config
 			elif priority == "remote" or priority == "database":
-				send(stdout, INF, "config-preference set to remote/database, loading database config information")
+				logger.info("config-preference set to remote/database, loading database config information")
 				self.config["variable"] = get_database_config(client)
 				# change variable to match remote without updating local version
 			else:

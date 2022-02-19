@@ -149,32 +149,27 @@ __author__ = (
 
 # imports:
 
-import json
 import os, sys, time
 import pymongo # soon to be deprecated
 import traceback
 import warnings
-import zmq
 from config import Configuration, ConfigurationError
 from data import get_previous_time, set_current_time, check_new_database_matches
-from interface import splash, log, ERR, INF, stdout, stderr
+from interface import Logger
 from module import Match, Metric, Pit
 
 config_path = "config.json"
 
-def main(send, verbose = False, profile = False, debug = False):
+def main(logger, verbose, profile, debug, socket_send = None):
 
 	def close_all():
 		if "client" in locals():
 			client.close()
-		if "f" in locals():
-			f.close()
 
 	warnings.filterwarnings("ignore")
 	exit_code = 0
 
-	if verbose:
-		splash(__version__)
+	logger.splash(__version__)
 
 	modules = {"match": Match, "metric": Metric, "pit": Pit}
 
@@ -184,23 +179,25 @@ def main(send, verbose = False, profile = False, debug = False):
 
 			loop_start = time.time()
 
-			send(stdout, INF, "current time: " + str(loop_start))
+			logger.info("current time: " + str(loop_start))
 
 			config = Configuration(config_path)
 			
-			send(stdout, INF, "found and loaded config at <" + config_path + ">")
+			logger.info("found and loaded config at <" + config_path + ">")
 
 			apikey, tbakey = config.database, config.tba
 
-			send(stdout, INF, "found and loaded database and tba keys")
+			logger.info("found and loaded database and tba keys")
 
 			client = pymongo.MongoClient(apikey)
 
-			send(stdout, INF, "established connection to database")
-			previous_time = get_previous_time(client)
-			send(stdout, INF, "analysis backtimed to: " + str(previous_time))
+			logger.info("established connection to database")
 
-			config.resolve_config_conflicts(send, client)
+			previous_time = get_previous_time(client)
+
+			logger.info("analysis backtimed to: " + str(previous_time))
+
+			config.resolve_config_conflicts(logger, client)
 
 			config_modules, competition = config.modules, config.competition
 
@@ -212,70 +209,73 @@ def main(send, verbose = False, profile = False, debug = False):
 					if not valid:
 						continue
 					current_module.run()
-					send(stdout, INF, m + " module finished in " + str(time.time() - start) + " seconds")
+					logger.info(m + " module finished in " + str(time.time() - start) + " seconds")
 					if debug:
-						f = open(m + ".log", "w+")
-						json.dump({"data": current_module.data, "results":current_module.results}, f, ensure_ascii=False, indent=4)
-						f.close()
+						logger.save_module_to_file(m, current_module.data, current_module.results) # logging flag check done in logger
 
 			set_current_time(client, loop_start)
 			close_all()
 
-			send(stdout, INF, "closed threads and database client")
-			send(stdout, INF, "finished all tasks in " + str(time.time() - loop_start) + " seconds, looping")
+			logger.info("closed threads and database client")
+			logger.info("finished all tasks in " + str(time.time() - loop_start) + " seconds, looping")
 
 			if profile:
 				exit_code = 0
 				break
 
+			if debug:
+				exit_code = 0
+				break
+
 			event_delay = config["variable"]["event-delay"]
 			if event_delay:
-				send(stdout, INF, "loop delayed until database returns new matches")
+				logger.info("loop delayed until database returns new matches")
 				new_match = False
 				while not new_match:
 					time.sleep(1)
 					new_match = check_new_database_matches(client, competition)
-				send(stdout, INF, "database returned new matches")
+				logger.info("database returned new matches")
 			else:
 				loop_delay = float(config["variable"]["loop-delay"])
 				remaining_time = loop_delay - (time.time() - loop_start)
 				if remaining_time > 0:
-					send(stdout, INF, "loop delayed by " + str(remaining_time) + " seconds")
+					logger.info("loop delayed by " + str(remaining_time) + " seconds")
 					time.sleep(remaining_time)
 
 		except KeyboardInterrupt:
-			send(stdout, INF, "detected KeyboardInterrupt, killing threads")
+			logger.info("detected KeyboardInterrupt, killing threads")
 			close_all()
-			send(stdout, INF, "terminated threads, exiting")
+			logger.info("terminated threads, exiting")
 			break
 
 		except ConfigurationError as e:
-			send(stderr, ERR, "encountered a configuration error: " + str(e), code = e.code)
-			traceback.print_exc(file = stderr)
+			logger.error("encountered a configuration error: " + str(e))
+			logger.error("".join(traceback.format_exception(e)))
+			#traceback.print_exc(file = stderr)
 			exit_code = 1
 			close_all()
 			break
 
 		except Exception as e:
-			send(stderr, ERR, "encountered an exception while running", code = 1)
-			traceback.print_exc(file = stderr)
+			logger.error("encountered an exception while running")
+			logger.error("".join(traceback.format_exception(e)))
+			#traceback.print_exc(file = stderr)
 			exit_code = 1
 			close_all()
 			break
 	
 	return exit_code
 
-def start(pid_path, verbose = False, profile = False, debug = False):
+def start(pid_path, verbose, profile, debug):
 
 	if profile:
 
-		def send(target, level, message, code = 0):
-			pass
+		logger = Logger(verbose, profile, debug)
 
 		import cProfile, pstats, io
 		profile = cProfile.Profile()
 		profile.enable()
-		exit_code = main(send, profile = True)
+		exit_code = main(logger, verbose, profile, debug)
 		profile.disable()
 		f = open("profile.txt", 'w+')
 		ps = pstats.Stats(profile, stream = f).sort_stats('cumtime')
@@ -284,35 +284,38 @@ def start(pid_path, verbose = False, profile = False, debug = False):
 
 	elif verbose:
 
-		exit_code = main(log, verbose = verbose)
+		logger = Logger(verbose, profile, debug)
+
+		exit_code = main(logger, verbose, profile, debug)
 		sys.exit(exit_code)
 
 	elif debug:
 
-		exit_code = main(log, verbose = True, profile = True, debug = debug)
+		logger = Logger(verbose, profile, debug)
+
+		exit_code = main(logger, verbose, profile, debug)
 		sys.exit(exit_code)
 
 	else:
-		
-		f = open('errorlog.log', 'w+')
+
+		logfile = "logfile.log"
+
+		f = open(logfile, 'w+')
+		f.close()
+
+		e = open('errorlog.log', 'w+')
 		with daemon.DaemonContext(
-			working_directory = os.getcwd(),
-			pidfile = pidfile.TimeoutPIDLockFile(pid_path),
-			stderr = f
+				working_directory = os.getcwd(),
+				pidfile = pidfile.TimeoutPIDLockFile(pid_path),
+				stderr = e
 			):
 
-			context = zmq.Context()
-			socket = context.socket(zmq.PUB)
-			socket.bind("tcp://*:5678")
+			logger = Logger(verbose, profile, debug, file = logfile)
 
-			socket.send(b'status')
+			exit_code = main(logger, verbose, profile, debug)
 
-			def send(target, level, message, code = 0):
-				socket.send(bytes("status: " + message, 'utf-8'))
-
-			exit_code = main(send)
-			socket.close()
 			f.close()
+
 			sys.exit(exit_code)
 
 def stop(pid_path):
@@ -334,12 +337,12 @@ def stop(pid_path):
 			if os.path.exists(pid_path):
 				os.remove(pid_path)
 		else:
-			traceback.print_exc(file = stderr)
+			traceback.print_exc(file = sys.stderr)
 			sys.exit(1)
 
 def restart(pid_path):
 	stop(pid_path)
-	start(pid_path)
+	start(pid_path, False, False, False)
 
 if __name__ == "__main__":
 
@@ -353,17 +356,17 @@ if __name__ == "__main__":
 		pid_path = "tra-daemon.pid"
 		if len(sys.argv) == 2:
 			if 'start' == sys.argv[1]:
-				start(pid_path)
+				start(pid_path, False, False, False)
 			elif 'stop' == sys.argv[1]:
 				stop(pid_path)
 			elif 'restart' == sys.argv[1]:
 				restart(pid_path)
 			elif 'verbose' == sys.argv[1]:
-				start(None, verbose = True)
+				start(None, True, False, False)
 			elif 'profile' == sys.argv[1]:
-				start(None, profile=True)
+				start(None, False, True, False)
 			elif 'debug' == sys.argv[1]:
-				start(None, debug = True)
+				start(None, False, False, True)
 			else:
 				print("usage: %s start|stop|restart|verbose|profile|debug" % sys.argv[0])
 				sys.exit(2)
