@@ -147,11 +147,6 @@ __author__ = (
 	"Jacob Levine <jlevine@imsa.edu>",
 )
 
-__all__ = [
-	"load_config",
-	"save_config",
-]
-
 # imports:
 
 import json
