@@ -5,11 +5,10 @@ import json
 
 class Logger(L):
 
-	send = None
 	file = None
-	debug = False
 
 	levels = {
+		0: "",
 		10:"[DEBUG]   ",
 		20:"[INFO]    ",
 		30:"[WARNING] ",
@@ -17,20 +16,24 @@ class Logger(L):
 		50:"[CRITICAL]",
 	}
 
+	targets = []
+
 	def __init__(self, verbose, profile, debug, file = None):
 		super().__init__("tra_logger")
-		self.debug = debug
+
 		self.file = file
+
+		if file != None:
+			self.targets.append(self._send_file)
+
 		if profile:
-			self.send = self._send_null
+			self.targets.append(self._send_null)
 		elif verbose:
-			self.send = self._send_scli
+			self.targets.append(self._send_scli)
 		elif debug:
-			self.send = self._send_scli
-		elif file != None:
-			self.send = self._send_file
+			self.targets.append(self._send_scli)
 		else:
-			self.send = self._send_null
+			self.targets.append(self._send_null)
 
 	def _send_null(self, msg):
 		pass
@@ -47,7 +50,8 @@ class Logger(L):
 		return datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S %Z")
 
 	def log(self, level, msg):
-		self.send(self.get_time_formatted() + "| " + self.levels[level] + ": " + msg)
+		for t in self.targets:
+			t(self.get_time_formatted() + "| " + self.levels[level] + ": " + msg)
 
 	def debug(self, msg):
 		self.log(10, msg)
@@ -67,13 +71,13 @@ class Logger(L):
 	def splash(self, version):
 
 		def hrule():
-			self.send("#"+38*"-"+"#")
+			self.log(0, "#"+38*"-"+"#")
 		def box(s):
 			temp = "|"
 			temp += s
 			temp += (40-len(s)-2)*" "
 			temp += "|"
-			self.send(temp)
+			self.log(0, temp)
 		
 		hrule()
 		box(" superscript version: " + version)
