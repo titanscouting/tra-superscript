@@ -19,7 +19,7 @@ def get_team_competition():
 	if json['success']:
 		return json['competition']
 	else:
-		raise APIError(json, endpoint)
+		raise APIError(json)
 
 def get_team():
 	endpoint = '/api/fetchTeamCompetition'
@@ -32,7 +32,7 @@ def get_team():
 	if json['success']:
 		return json['team']
 	else:
-		raise APIError(json, endpoint)
+		raise APIError(json)
 
 def get_team_match_data(competition, team_num):
 	endpoint = '/api/fetchAllTeamMatchData'
@@ -47,7 +47,7 @@ def get_team_match_data(competition, team_num):
 	if json['success']:
 		return json['data'][team_num]
 	else:
-		raise APIError(json, endpoint)
+		raise APIError(json)
 
 def get_teams_at_competition(competition):
 	endpoint = '/api/fetchAllTeamNicknamesAtCompetition'
@@ -61,4 +61,4 @@ def get_teams_at_competition(competition):
 	if json['success']:
 		return list(json['data'].keys())
 	else:
-		raise APIError(json, endpoint)
+		raise APIError(json)
