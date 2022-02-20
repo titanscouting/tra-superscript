@@ -5,11 +5,11 @@
     },
     "settings": { 
 		"terminal.integrated.shell.linux": "/bin/bash",
-		"python.pythonPath": "",
+		"python.pythonPath": "/usr/local/bin/python",
 		"python.linting.enabled": true,
 		"python.linting.pylintEnabled": true,
-		"python.linting.pylintPath": "",
-		"python.testing.pytestPath": "",
+		"python.linting.pylintPath": "/usr/local/bin/pylint",
+		"python.testing.pytestPath": "/usr/local/bin/pytest",
     "editor.tabSize": 4,
     "editor.insertSpaces": false
 	},
