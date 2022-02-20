@@ -1,5 +1,4 @@
 import requests 
-import json
 from exceptions import APIError
 from dep import load_config
 
@@ -14,7 +13,7 @@ def get_team_competition():
 		"CLIENT_ID": trakey['CLIENT_ID'],
 		"CLIENT_SECRET": trakey['CLIENT_SECRET']
 	}
-	response = requests.request("GET", url + endpoint, params=params)
+	response = requests.request("GET", url + endpoint, verify=False, params=params)
 	json = response.json()
 	if json['success']:
 		return json['competition']
@@ -27,7 +26,7 @@ def get_team():
 		"CLIENT_ID": trakey['CLIENT_ID'],
 		"CLIENT_SECRET": trakey['CLIENT_SECRET']
 	}
-	response = requests.request("GET", url + endpoint, params=params)
+	response = requests.request("GET", url + endpoint, verify=False, params=params)
 	json = response.json()
 	if json['success']:
 		return json['team']
@@ -42,7 +41,7 @@ def get_team_match_data(competition, team_num):
 		"CLIENT_ID": trakey['CLIENT_ID'],
 		"CLIENT_SECRET": trakey['CLIENT_SECRET']
 	}
-	response = requests.request("GET", url + endpoint, params=params)
+	response = requests.request("GET", url + endpoint, verify=False, params=params)
 	json = response.json()
 	if json['success']:
 		return json['data'][team_num]
@@ -56,7 +55,7 @@ def get_teams_at_competition(competition):
 		"CLIENT_ID": trakey['CLIENT_ID'],
 		"CLIENT_SECRET": trakey['CLIENT_SECRET']
 	}
-	response = requests.request("GET", url + endpoint, params=params)
+	response = requests.request("GET", url + endpoint, verify=False, params=params)
 	json = response.json()
 	if json['success']:
 		return list(json['data'].keys())
