@@ -1,4 +1,4 @@
-set pathtospec="../src/cli/superscript.spec"
+set pathtospec="../src/superscript.spec"
 set pathtodist="../dist/"
 set pathtowork="temp/"
 

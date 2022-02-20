@@ -9,13 +9,15 @@ a = Analysis(['superscript.py'],
              hiddenimports=[
                  "dnspython", 
                  "sklearn.utils._weight_vector",
+                 "sklearn.utils._typedefs",
+                 "sklearn.neighbors._partition_nodes",
                  "requests",
              ],
              hookspath=[],
              runtime_hooks=[],
              excludes=[
                  "matplotlib",
-                 "pandas"
+                 #"pandas"
                  ],
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
