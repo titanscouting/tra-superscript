@@ -1,4 +1,4 @@
-pathtospec="../src/superscript.spec"
+pathtospec="superscript.spec"
 pathtodist="../dist/"
 pathtowork="temp/"
 

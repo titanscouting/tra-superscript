@@ -4,7 +4,7 @@ import pandas as pd
 
 def pull_new_tba_matches(apikey, competition, cutoff):
 	api_key= apikey 
-	x=requests.get("https://www.thebluealliance.com/api/v3/event/"+competition+"/matches/simple", headers={"X-TBA-Auth-Key":api_key}, verify=False)
+	x=requests.get("https://www.thebluealliance.com/api/v3/event/"+competition+"/matches/simple", headers={"X-TBA-Auth-Key":api_key})
 	out = []
 	for i in x.json():
 		if i["actual_time"] != None and i["actual_time"]-cutoff >= 0 and i["comp_level"] == "qm":
@@ -51,7 +51,7 @@ def get_metrics_data_formatted(client, competition):
 	return out
 
 def get_pit_data_formatted(client, competition):
-	x=requests.get("https://titanscouting.epochml.org/api/fetchAllTeamNicknamesAtCompetition?competition="+competition, verify=False)
+	x=requests.get("https://titanscouting.epochml.org/api/fetchAllTeamNicknamesAtCompetition?competition="+competition)
 	x = x.json()
 	x = x['data']
 	x = x.keys()
