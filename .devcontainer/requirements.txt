@@ -6,6 +6,7 @@ pyinstaller
 pylint
 pymongo
 pyparsing
+pytest
 python-daemon
 pyzmq
 requests

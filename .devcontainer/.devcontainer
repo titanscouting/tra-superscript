@@ -1,0 +1,22 @@
+{
+    "name": "TRA Analysis Development Environment",
+    "build": {
+		"dockerfile": "Dockerfile"
+    },
+    "settings": { 
+		"terminal.integrated.shell.linux": "/bin/bash",
+		"python.pythonPath": "/usr/local/bin/python",
+		"python.linting.enabled": true,
+		"python.linting.pylintEnabled": true,
+		"python.linting.pylintPath": "/usr/local/bin/pylint",
+		"python.testing.pytestPath": "/usr/local/bin/pytest",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": false
+	},
+	"extensions": [
+		"mhutchie.git-graph",
+		"ms-python.python",
+		"waderyan.gitblame"
+	],
+		"postCreateCommand": ""
+}
