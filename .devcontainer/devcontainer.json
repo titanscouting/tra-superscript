@@ -1,7 +1,7 @@
 {
     "name": "TRA Analysis Development Environment",
     "build": {
-		"dockerfile": "Dockerfile",
+		"dockerfile": "dev-dockerfile",
     },
     "settings": { 
 		"terminal.integrated.shell.linux": "/bin/bash",

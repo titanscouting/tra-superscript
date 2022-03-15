@@ -149,9 +149,25 @@ __author__ = (
 
 # imports:
 
+<<<<<<< HEAD
 import os, sys, time
 import pymongo # soon to be deprecated
 import traceback
+=======
+from tra_analysis import analysis as an
+import data as d
+from collections import defaultdict
+import json
+import math
+import numpy as np
+import os
+from os import system, name
+from pathlib import Path
+from multiprocessing import Pool
+import platform
+import sys
+import time
+>>>>>>> master
 import warnings
 from config import Configuration, ConfigurationError
 from data import get_previous_time, set_current_time, check_new_database_matches
@@ -159,10 +175,15 @@ from interface import Logger
 from module import Match, Metric, Pit
 import zmq
 
+<<<<<<< HEAD
 config_path = "config.json"
+=======
+global exec_threads
+>>>>>>> master
 
 def main(logger, verbose, profile, debug, socket_send = None):
 
+<<<<<<< HEAD
 	def close_all():
 		if "client" in locals():
 			client.close()
@@ -218,10 +239,95 @@ def main(logger, verbose, profile, debug, socket_send = None):
 					socket_send(m + " module finished in " + str(time.time() - start) + " seconds")
 					if debug:
 						logger.save_module_to_file(m, current_module.data, current_module.results) # logging flag check done in logger
+=======
+	global exec_threads
+
+	sys.stderr = open("errorlog.txt", "w")
+
+	warnings.filterwarnings("ignore")
+
+	splash()
+
+	while (True):
+
+		try:
+
+			current_time = time.time()
+			print("[OK] time: " + str(current_time))
+
+			config = load_config("config.json")
+			competition = config["competition"]
+			match_tests = config["statistics"]["match"]
+			pit_tests = config["statistics"]["pit"]
+			metrics_tests = config["statistics"]["metric"]
+			print("[OK] configs loaded")
+
+			print("[OK] starting threads")
+			cfg_max_threads = config["max-threads"]
+			sys_max_threads = os.cpu_count()
+			if cfg_max_threads > -sys_max_threads and cfg_max_threads < 0 :
+				alloc_processes = sys_max_threads + cfg_max_threads
+			elif cfg_max_threads > 0 and cfg_max_threads < 1:
+				alloc_processes = math.floor(cfg_max_threads * sys_max_threads)
+			elif cfg_max_threads > 1 and cfg_max_threads <= sys_max_threads:
+				alloc_processes = cfg_max_threads
+			elif cfg_max_threads == 0:
+				alloc_processes = sys_max_threads
+			else:
+				print("[ERROR] Invalid number of processes, must be between -" + str(sys_max_threads) + " and " + str(sys_max_threads))
+				exit()
+			exec_threads = Pool(processes = alloc_processes)
+			print("[OK] " + str(alloc_processes) + " threads started")
+
+			apikey = config["key"]["database"]
+			tbakey = config["key"]["tba"]
+			print("[OK] loaded keys")
+
+			previous_time = get_previous_time(apikey)
+			print("[OK] analysis backtimed to: " + str(previous_time))
+
+			print("[OK] loading data")
+			start = time.time()
+			match_data = load_match(apikey, competition)
+			pit_data = load_pit(apikey, competition)
+			print("[OK] loaded data in " + str(time.time() - start) + " seconds")
+
+			print("[OK] running match stats")
+			start = time.time()
+			matchloop(apikey, competition, match_data, match_tests)
+			print("[OK] finished match stats in " + str(time.time() - start) + " seconds")
+
+			print("[OK] running team metrics")
+			start = time.time()
+			metricloop(tbakey, apikey, competition, previous_time, metrics_tests)
+			print("[OK] finished team metrics in " + str(time.time() - start) + " seconds")
+
+			print("[OK] running pit analysis")
+			start = time.time()
+			pitloop(apikey, competition, pit_data, pit_tests)
+			print("[OK] finished pit analysis in " + str(time.time() - start) + " seconds")
+			
+			set_current_time(apikey, current_time)
+			print("[OK] finished all tests, looping")
+
+			print_hrule()
+		
+		except KeyboardInterrupt:
+			print("\n[OK] caught KeyboardInterrupt, killing processes")
+			exec_threads.terminate()
+			print("[OK] processes killed, exiting")
+			exit()
+
+		else:
+			pass
+
+		#clear()
+>>>>>>> master
 
 			set_current_time(client, loop_start)
 			close_all()
 
+<<<<<<< HEAD
 			logger.info("closed threads and database client")
 			logger.info("finished all tasks in " + str(time.time() - loop_start) + " seconds, looping")
 			socket_send("closed threads and database client")
@@ -229,6 +335,41 @@ def main(logger, verbose, profile, debug, socket_send = None):
 
 			if profile:
 				return 0
+=======
+def print_hrule():
+
+	print("#"+38*"-"+"#")
+
+def print_box(s):
+
+	temp = "|"
+	temp += s
+	temp += (40-len(s)-2)*" "
+	temp += "|"
+	print(temp)
+
+def splash():
+
+	print_hrule()
+	print_box(" superscript version: " + __version__)
+	print_box(" os: " + platform.system())
+	print_box(" python: " + platform.python_version())
+	print_hrule()
+
+def load_config(file):
+
+	config_vector = {}
+
+	try:
+		f = open(file)
+	except:
+		print("[ERROR] could not locate config.json, generating blank config.json and exiting")
+		f = open(file, "w")
+		f.write(sample_json)
+		exit()
+	
+	config_vector = json.load(f)
+>>>>>>> master
 
 			if debug:
 				return 0
@@ -316,6 +457,7 @@ def start(pid_path, verbose, profile, debug):
 
 	else:
 
+<<<<<<< HEAD
 		logfile = "logfile.log"
 
 		f = open(logfile, 'w+')
@@ -363,6 +505,119 @@ def stop(pid_path):
 		if err.find("No such process") > 0:
 			if os.path.exists(pid_path):
 				os.remove(pid_path)
+=======
+		previous_time = previous_time["latest_update"]
+
+	return previous_time
+
+def set_current_time(apikey, current_time):
+
+	d.set_analysis_flags(apikey, "latest_update", {"latest_update":current_time})
+
+def load_match(apikey, competition):
+
+	return d.get_match_data_formatted(apikey, competition)
+
+def simplestats(data_test):
+
+	data = np.array(data_test[0])
+	data = data[np.isfinite(data)]
+	ranges = list(range(len(data)))
+
+	test = data_test[1]
+
+	if test == "basic_stats":
+		return an.basic_stats(data)
+
+	if test == "historical_analysis":
+		return an.histo_analysis([ranges, data])
+
+	if test == "regression_linear":
+		return an.regression(ranges, data, ['lin'])
+
+	if test == "regression_logarithmic":
+		return an.regression(ranges, data, ['log'])
+
+	if test == "regression_exponential":
+		return an.regression(ranges, data, ['exp'])
+
+	if test == "regression_polynomial":
+		return an.regression(ranges, data, ['ply'])
+
+	if test == "regression_sigmoidal":
+		return an.regression(ranges, data, ['sig'])
+
+def matchloop(apikey, competition, data, tests): # expects 3D array with [Team][Variable][Match]
+
+	global exec_threads
+
+	short_mapping = {"regression_linear": "lin", "regression_logarithmic": "log", "regression_exponential": "exp", "regression_polynomial": "ply", "regression_sigmoidal": "sig"}
+
+	class AutoVivification(dict):
+		def __getitem__(self, item):
+			try:
+				return dict.__getitem__(self, item)
+			except KeyError:
+				value = self[item] = type(self)()
+				return value
+
+	return_vector = {}
+	
+	team_filtered = []
+	variable_filtered = []
+	variable_data = []
+	test_filtered = []
+	result_filtered = []
+	return_vector = AutoVivification()
+
+	for team in data:
+
+		for variable in data[team]:
+
+			if variable in tests:
+
+				for test in tests[variable]:
+
+					team_filtered.append(team)
+					variable_filtered.append(variable)
+					variable_data.append((data[team][variable], test))
+					test_filtered.append(test)
+
+	result_filtered = exec_threads.map(simplestats, variable_data)
+	i = 0
+
+	result_filtered = list(result_filtered)
+
+	for result in result_filtered:
+
+		filtered = test_filtered[i]
+
+		try:
+			short = short_mapping[filtered]
+			return_vector[team_filtered[i]][variable_filtered[i]][test_filtered[i]] = result[short]
+		except KeyError: # not in mapping
+			return_vector[team_filtered[i]][variable_filtered[i]][test_filtered[i]] = result
+		i += 1
+
+	push_match(apikey, competition, return_vector)
+
+def load_metric(apikey, competition, match, group_name, metrics):
+
+	group = {}
+
+	for team in match[group_name]:
+
+		db_data = d.get_team_metrics_data(apikey, competition, team)
+
+		if d.get_team_metrics_data(apikey, competition, team) == None:
+
+			elo = {"score": metrics["elo"]["score"]}
+			gl2 = {"score": metrics["gl2"]["score"], "rd": metrics["gl2"]["rd"], "vol": metrics["gl2"]["vol"]}
+			ts = {"mu": metrics["ts"]["mu"], "sigma": metrics["ts"]["sigma"]}
+
+			group[team] = {"elo": elo, "gl2": gl2, "ts": ts}
+
+>>>>>>> master
 		else:
 			traceback.print_exc(file = sys.stderr)
 			sys.exit(1)
@@ -399,5 +654,156 @@ if __name__ == "__main__":
 				sys.exit(2)
 			sys.exit(0)
 		else:
+<<<<<<< HEAD
 			print("usage: %s start|stop|restart|verbose|profile|debug" % sys.argv[0])
 			sys.exit(2)
+=======
+
+			observations = {"red": 0.5, "blu": 0.5}
+
+		red_elo_delta = an.Metric().elo(red_elo["score"], blu_elo["score"], observations["red"], elo_N, elo_K) - red_elo["score"]
+		blu_elo_delta = an.Metric().elo(blu_elo["score"], red_elo["score"], observations["blu"], elo_N, elo_K) - blu_elo["score"]
+
+		new_red_gl2_score, new_red_gl2_rd, new_red_gl2_vol = an.Metric().glicko2(red_gl2["score"], red_gl2["rd"], red_gl2["vol"], [blu_gl2["score"]], [blu_gl2["rd"]], [observations["red"], observations["blu"]])
+		new_blu_gl2_score, new_blu_gl2_rd, new_blu_gl2_vol = an.Metric().glicko2(blu_gl2["score"], blu_gl2["rd"], blu_gl2["vol"], [red_gl2["score"]], [red_gl2["rd"]], [observations["blu"], observations["red"]])
+
+		red_gl2_delta = {"score": new_red_gl2_score - red_gl2["score"], "rd": new_red_gl2_rd - red_gl2["rd"], "vol": new_red_gl2_vol - red_gl2["vol"]}
+		blu_gl2_delta = {"score": new_blu_gl2_score - blu_gl2["score"], "rd": new_blu_gl2_rd - blu_gl2["rd"], "vol": new_blu_gl2_vol - blu_gl2["vol"]}
+
+		for team in red:
+
+			red[team]["elo"]["score"] = red[team]["elo"]["score"] + red_elo_delta
+
+			red[team]["gl2"]["score"] = red[team]["gl2"]["score"] + red_gl2_delta["score"]
+			red[team]["gl2"]["rd"] = red[team]["gl2"]["rd"] + red_gl2_delta["rd"]
+			red[team]["gl2"]["vol"] = red[team]["gl2"]["vol"] + red_gl2_delta["vol"]
+
+		for team in blu:
+
+			blu[team]["elo"]["score"] = blu[team]["elo"]["score"] + blu_elo_delta
+
+			blu[team]["gl2"]["score"] = blu[team]["gl2"]["score"] + blu_gl2_delta["score"]
+			blu[team]["gl2"]["rd"] = blu[team]["gl2"]["rd"] + blu_gl2_delta["rd"]
+			blu[team]["gl2"]["vol"] = blu[team]["gl2"]["vol"] + blu_gl2_delta["vol"]
+
+		temp_vector = {}
+		temp_vector.update(red)
+		temp_vector.update(blu)
+
+		push_metric(apikey, competition, temp_vector)
+
+def load_pit(apikey, competition):
+
+	return d.get_pit_data_formatted(apikey, competition)
+
+def pitloop(apikey, competition, pit, tests):
+
+	return_vector = {}
+	for team in pit:
+		for variable in pit[team]:
+			if variable in tests:
+				if not variable in return_vector:
+					return_vector[variable] = []
+				return_vector[variable].append(pit[team][variable])
+
+	push_pit(apikey, competition, return_vector)
+
+def push_match(apikey, competition, results):
+
+	for team in results:
+
+		d.push_team_tests_data(apikey, competition, team, results[team])
+
+def push_metric(apikey, competition, metric):
+
+	for team in metric:
+
+			d.push_team_metrics_data(apikey, competition, team, metric[team])
+
+def push_pit(apikey, competition, pit):
+
+	for variable in pit:
+
+		d.push_team_pit_data(apikey, competition, variable, pit[variable])
+
+def get_team_metrics(apikey, tbakey, competition):
+
+	metrics = d.get_metrics_data_formatted(apikey, competition)
+
+	elo = {}
+	gl2 = {}
+
+	for team in metrics:
+
+		elo[team] = metrics[team]["metrics"]["elo"]["score"]
+		gl2[team] = metrics[team]["metrics"]["gl2"]["score"]
+
+	elo = {k: v for k, v in sorted(elo.items(), key=lambda item: item[1])}
+	gl2 = {k: v for k, v in sorted(gl2.items(), key=lambda item: item[1])}
+
+	elo_ranked = []
+
+	for team in elo:
+
+		elo_ranked.append({"team": str(team), "elo": str(elo[team])})
+
+	gl2_ranked = []
+
+	for team in gl2:
+
+		gl2_ranked.append({"team": str(team), "gl2": str(gl2[team])})
+
+	return {"elo-ranks": elo_ranked, "glicko2-ranks": gl2_ranked}
+
+sample_json = """{
+	"max-threads": 0.5,
+	"team": "",
+	"competition": "2020ilch",
+	"key":{
+		"database":"",
+		"tba":""
+	},
+	"statistics":{
+		"match":{
+			"balls-blocked":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+			"balls-collected":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+			"balls-lower-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+			"balls-lower-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+			"balls-started":["basic_stats","historical_analyss","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+			"balls-upper-teleop":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"],
+			"balls-upper-auto":["basic_stats","historical_analysis","regression_linear","regression_logarithmic","regression_exponential","regression_polynomial","regression_sigmoidal"]
+
+		},
+		"metric":{
+			"elo":{
+				"score":1500,
+				"N":400,
+				"K":24
+			},
+			"gl2":{
+				"score":1500,
+				"rd":250,
+				"vol":0.06
+			},
+			"ts":{
+				"mu":25,
+				"sigma":8.33
+			}
+		},
+		"pit":{
+			"wheel-mechanism":true,
+			"low-balls":true,
+			"high-balls":true,
+			"wheel-success":true,
+			"strategic-focus":true,
+			"climb-mechanism":true,
+			"attitude":true
+		}
+	}
+}"""
+
+if __name__ == "__main__":
+	if sys.platform.startswith('win'):
+		multiprocessing.freeze_support()
+	main()
+>>>>>>> master
