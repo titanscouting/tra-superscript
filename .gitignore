@@ -16,3 +16,6 @@
 **/*.log
 **/errorlog.txt
 /dist/*
+
+slurm-tra-superscript.out
+config*.json

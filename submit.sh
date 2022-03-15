@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #SBATCH --job-name=tra-superscript
-#SBATCH --output=superscript.out
+#SBATCH --output=slurm-tra-superscript.out
 #SBATCH --ntasks=8
 #SBATCH --time=24:00:00
 #SBATCH --mem-per-cpu=256
