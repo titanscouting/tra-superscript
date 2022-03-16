@@ -8,6 +8,5 @@
 #SBATCH --mail-user=dsingh@imsa.edu
 #SBATCH -p cpu-long
 
-unset XDG_RUNTIME_DIR
 cd competition
 python superscript.py debug
