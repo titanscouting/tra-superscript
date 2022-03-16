@@ -9,8 +9,5 @@
 #SBATCH -p cpu-long
 
 unset XDG_RUNTIME_DIR
-/home/tools/anaconda3/bin/conda init
-source ~/.bashrc
-source activate base
 cd competition
-python superscript.py debug
+python superscript.py verbose
