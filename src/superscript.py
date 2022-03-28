@@ -149,19 +149,21 @@ __author__ = (
 
 # imports:
 
+from distutils.command.config import config
 import os, sys, time
 import pymongo # soon to be deprecated
 import traceback
 import warnings
 from config import Configuration, ConfigurationError
-from data import get_previous_time, set_current_time, check_new_database_matches
+from data import get_previous_time, set_current_time, check_new_database_matches, clear_metrics
 from interface import Logger
 from module import Match, Metric, Pit
 import zmq
 
-config_path = "config.json"
 
-def main(logger, verbose, profile, debug, socket_send = None):
+
+#def main(logger, verbose, profile, debug, socket_send = None):
+def main(logger, verbose, profile, debug, config_path):
 
 	def close_all():
 		if "client" in locals():
@@ -180,32 +182,32 @@ def main(logger, verbose, profile, debug, socket_send = None):
 			loop_start = time.time()
 
 			logger.info("current time: " + str(loop_start))
-			socket_send("current time: " + str(loop_start))
+			#socket_send("current time: " + str(loop_start))
 
 			config = Configuration(config_path)
 			
 			logger.info("found and loaded config at <" + config_path + ">")
-			socket_send("found and loaded config at <" + config_path + ">")
+			#socket_send("found and loaded config at <" + config_path + ">")
 
 			apikey, tbakey = config.database, config.tba
 
 			logger.info("found and loaded database and tba keys")
-			socket_send("found and loaded database and tba keys")
+			#socket_send("found and loaded database and tba keys")
 
 			client = pymongo.MongoClient(apikey)
 
 			logger.info("established connection to database")
-			socket_send("established connection to database")
+			#socket_send("established connection to database")
 
 			previous_time = get_previous_time(client)
 
 			logger.info("analysis backtimed to: " + str(previous_time))
-			socket_send("analysis backtimed to: " + str(previous_time))
+			#socket_send("analysis backtimed to: " + str(previous_time))
 
 			config.resolve_config_conflicts(logger, client)
 
 			config_modules, competition = config.modules, config.competition
-
+			clear_metrics(client, config.competition)
 			for m in config_modules:
 				if m in modules:
 					start = time.time()
@@ -215,7 +217,7 @@ def main(logger, verbose, profile, debug, socket_send = None):
 						continue
 					current_module.run()
 					logger.info(m + " module finished in " + str(time.time() - start) + " seconds")
-					socket_send(m + " module finished in " + str(time.time() - start) + " seconds")
+					#socket_send(m + " module finished in " + str(time.time() - start) + " seconds")
 					if debug:
 						logger.save_module_to_file(m, current_module.data, current_module.results) # logging flag check done in logger
 
@@ -224,8 +226,8 @@ def main(logger, verbose, profile, debug, socket_send = None):
 
 			logger.info("closed threads and database client")
 			logger.info("finished all tasks in " + str(time.time() - loop_start) + " seconds, looping")
-			socket_send("closed threads and database client")
-			socket_send("finished all tasks in " + str(time.time() - loop_start) + " seconds, looping")
+			#socket_send("closed threads and database client")
+			#socket_send("finished all tasks in " + str(time.time() - loop_start) + " seconds, looping")
 
 			if profile:
 				return 0
@@ -236,33 +238,33 @@ def main(logger, verbose, profile, debug, socket_send = None):
 			event_delay = config["variable"]["event-delay"]
 			if event_delay:
 				logger.info("loop delayed until database returns new matches")
-				socket_send("loop delayed until database returns new matches")
+				#socket_send("loop delayed until database returns new matches")
 				new_match = False
 				while not new_match:
 					time.sleep(1)
 					new_match = check_new_database_matches(client, competition)
 				logger.info("database returned new matches")
-				socket_send("database returned new matches")
+				#socket_send("database returned new matches")
 			else:
 				loop_delay = float(config["variable"]["loop-delay"])
 				remaining_time = loop_delay - (time.time() - loop_start)
 				if remaining_time > 0:
 					logger.info("loop delayed by " + str(remaining_time) + " seconds")
-					socket_send("loop delayed by " + str(remaining_time) + " seconds")
+					#socket_send("loop delayed by " + str(remaining_time) + " seconds")
 					time.sleep(remaining_time)
 
 		except KeyboardInterrupt:
 			close_all()
 			logger.info("detected KeyboardInterrupt, exiting")
-			socket_send("detected KeyboardInterrupt, exiting")
+			#socket_send("detected KeyboardInterrupt, exiting")
 			return 0
 
 		except ConfigurationError as e:
 			str_e = "".join(traceback.format_exception(e))
 			logger.error("encountered a configuration error: " + str(e))
 			logger.error(str_e)
-			socket_send("encountered a configuration error: " + str(e))
-			socket_send(str_e)
+			#socket_send("encountered a configuration error: " + str(e))
+			#socket_send(str_e)
 			close_all()
 			return 1
 
@@ -270,12 +272,12 @@ def main(logger, verbose, profile, debug, socket_send = None):
 			str_e = "".join(traceback.format_exception(e))
 			logger.error("encountered an exception while running")
 			logger.error(str_e)
-			socket_send("encountered an exception while running")
-			socket_send(str_e)
+			#socket_send("encountered an exception while running")
+			#socket_send(str_e)
 			close_all()
 			return 1
 
-def start(pid_path, verbose, profile, debug):
+def start(pid_path, verbose, profile, debug, config_path):
 
 	if profile:
 
@@ -287,7 +289,8 @@ def start(pid_path, verbose, profile, debug):
 		import cProfile, pstats, io
 		profile = cProfile.Profile()
 		profile.enable()
-		exit_code = main(logger, verbose, profile, debug, socket_send = send)
+		#exit_code = main(logger, verbose, profile, debug, socket_send = send)
+		exit_code = main(logger, verbose, profile, debug, config_path)
 		profile.disable()
 		f = open("profile.txt", 'w+')
 		ps = pstats.Stats(profile, stream = f).sort_stats('cumtime')
@@ -301,7 +304,8 @@ def start(pid_path, verbose, profile, debug):
 
 		logger = Logger(verbose, profile, debug)
 
-		exit_code = main(logger, verbose, profile, debug, socket_send = send)
+		#exit_code = main(logger, verbose, profile, debug, socket_send = send)
+		exit_code = main(logger, verbose, profile, debug, config_path)
 		sys.exit(exit_code)
 
 	elif debug:
@@ -311,93 +315,34 @@ def start(pid_path, verbose, profile, debug):
 
 		logger = Logger(verbose, profile, debug)
 
-		exit_code = main(logger, verbose, profile, debug, socket_send = send)
+		#exit_code = main(logger, verbose, profile, debug, socket_send = send)
+		exit_code = main(logger, verbose, profile, debug, config_path)
 		sys.exit(exit_code)
 
 	else:
 
-		logfile = "logfile.log"
-
-		f = open(logfile, 'w+')
-		f.close()
-
-		e = open('errorlog.log', 'w+')
-		with daemon.DaemonContext(
-				working_directory = os.getcwd(),
-				pidfile = pidfile.TimeoutPIDLockFile(pid_path),
-				stderr = e
-			):
-
-			context = zmq.Context()
-			socket = context.socket(zmq.PUB)
-			socket.bind("tcp://*:5678")
-			socket.send(b'status')
-
-			def send(msg):
-				socket.send(bytes("status: " + msg, "utf-8"))
-
-			logger = Logger(verbose, profile, debug, file = logfile)
-
-			exit_code = main(logger, verbose, profile, debug, socket_send = send)
-
-			socket.close()
-			f.close()
-			
-			sys.exit(exit_code)
-
-def stop(pid_path):
-	try:
-		pf = open(pid_path, 'r')
-		pid = int(pf.read().strip())
-		pf.close()
-	except IOError:
-		sys.stderr.write("pidfile at <" + pid_path + "> does not exist. Daemon not running?\n")
-		return
-
-	try:
-		while True:
-			os.kill(pid, SIGTERM)
-			time.sleep(0.01)
-	except OSError as err:
-		err = str(err)
-		if err.find("No such process") > 0:
-			if os.path.exists(pid_path):
-				os.remove(pid_path)
-		else:
-			traceback.print_exc(file = sys.stderr)
-			sys.exit(1)
-
-def restart(pid_path):
-	stop(pid_path)
-	start(pid_path, False, False, False)
+		pass # must be vebose, debug or profile
 
 if __name__ == "__main__":
 
-	if sys.platform.startswith("win"):
-		start(None, verbose = True)
+	config_path = 'config.json'
 
+	if len(sys.argv) == 2:
+		pass
+	elif len(sys.argv) == 3:
+		config_path = sys.argv[2]
 	else:
-		import daemon
-		from daemon import pidfile
-		from signal import SIGTERM
-		pid_path = "tra-daemon.pid"
-		if len(sys.argv) == 2:
-			if 'start' == sys.argv[1]:
-				start(pid_path, False, False, False)
-			elif 'stop' == sys.argv[1]:
-				stop(pid_path)
-			elif 'restart' == sys.argv[1]:
-				restart(pid_path)
-			elif 'verbose' == sys.argv[1]:
-				start(None, True, False, False)
-			elif 'profile' == sys.argv[1]:
-				start(None, False, True, False)
-			elif 'debug' == sys.argv[1]:
-				start(None, False, False, True)
-			else:
-				print("usage: %s start|stop|restart|verbose|profile|debug" % sys.argv[0])
-				sys.exit(2)
-			sys.exit(0)
-		else:
-			print("usage: %s start|stop|restart|verbose|profile|debug" % sys.argv[0])
-			sys.exit(2)
+		print("usage: %s verbose|profile|debug" % sys.argv[0])
+		sys.exit(2)
+
+	if 'verbose' == sys.argv[1]:
+		start(None, True, False, False, config_path = config_path)
+	elif 'profile' == sys.argv[1]:
+		start(None, True, False, False, config_path = config_path)
+	elif 'debug' == sys.argv[1]:
+		start(None, True, False, False, config_path = config_path)
+	else:
+		print("usage: %s verbose|profile|debug" % sys.argv[0])
+		sys.exit(2)
+
+	sys.exit(0)
