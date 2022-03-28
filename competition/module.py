@@ -181,9 +181,9 @@ class Metric (Module):
 
 		red = {}
 		blu = {}
-		for match in tqdm(matches, desc="Metrics"):
-			red = d.load_metric(self.apikey, self.competition, match, "red", self.config["tests"])
-			blu = d.load_metric(self.apikey, self.competition, match, "blue", self.config["tests"])
+		for match in tqdm(matches, desc="Metrics"): # grab matches and loop through each one
+			red = d.load_metric(self.apikey, self.competition, match, "red", self.config["tests"]) # get the current ratings for red
+			blu = d.load_metric(self.apikey, self.competition, match, "blue", self.config["tests"]) # get the current ratings for blue
 	
 			elo_red_total = 0
 			elo_blu_total = 0
@@ -197,7 +197,7 @@ class Metric (Module):
 			gl2_red_vol_total = 0
 			gl2_blu_vol_total = 0
 
-			for team in red:
+			for team in red: # for each team in red, add up the elo score and gl2 score components
 
 				elo_red_total += red[team]["elo"]["score"]
 
@@ -205,7 +205,7 @@ class Metric (Module):
 				gl2_red_rd_total += red[team]["gl2"]["rd"]
 				gl2_red_vol_total += red[team]["gl2"]["vol"]
 
-			for team in blu:
+			for team in blu: # for each team in blue, add up the elo score and gl2 score components
 
 				elo_blu_total += blu[team]["elo"]["score"]
 
@@ -213,35 +213,35 @@ class Metric (Module):
 				gl2_blu_rd_total += blu[team]["gl2"]["rd"]
 				gl2_blu_vol_total += blu[team]["gl2"]["vol"]
 
-			red_elo = {"score": elo_red_total / len(red)}
-			blu_elo = {"score": elo_blu_total / len(blu)}
+			red_elo = {"score": elo_red_total / len(red)} # average the scores by dividing by 3
+			blu_elo = {"score": elo_blu_total / len(blu)} # average the scores by dividing by 3
 
-			red_gl2 = {"score": gl2_red_score_total / len(red), "rd": gl2_red_rd_total / len(red), "vol": gl2_red_vol_total / len(red)}
-			blu_gl2 = {"score": gl2_blu_score_total / len(blu), "rd": gl2_blu_rd_total / len(blu), "vol": gl2_blu_vol_total / len(blu)}
+			red_gl2 = {"score": gl2_red_score_total / len(red), "rd": gl2_red_rd_total / len(red), "vol": gl2_red_vol_total / len(red)} # average the scores by dividing by 3
+			blu_gl2 = {"score": gl2_blu_score_total / len(blu), "rd": gl2_blu_rd_total / len(blu), "vol": gl2_blu_vol_total / len(blu)} # average the scores by dividing by 3
 
 
-			if match["winner"] == "red":
+			if match["winner"] == "red": # if red won, set observations to {"red": 1, "blu": 0}
 
 				observations = {"red": 1, "blu": 0}
 
-			elif match["winner"] == "blue":
+			elif match["winner"] == "blue": # if blue won, set observations to {"red": 0, "blu": 1}
 
 				observations = {"red": 0, "blu": 1}
 
-			else:
+			else: # otherwise it was a tie and observations is {"red": 0.5, "blu": 0.5}
 
 				observations = {"red": 0.5, "blu": 0.5}
 
-			red_elo_delta = an.Metric().elo(red_elo["score"], blu_elo["score"], observations["red"], elo_N, elo_K) - red_elo["score"]
-			blu_elo_delta = an.Metric().elo(blu_elo["score"], red_elo["score"], observations["blu"], elo_N, elo_K) - blu_elo["score"]
+			red_elo_delta = an.Metric().elo(red_elo["score"], blu_elo["score"], observations["red"], elo_N, elo_K) - red_elo["score"] # calculate new elo for red using analysis, this is a delta
+			blu_elo_delta = an.Metric().elo(blu_elo["score"], red_elo["score"], observations["blu"], elo_N, elo_K) - blu_elo["score"] # calculate new elo for blue using analysis, this is a delta
 
-			new_red_gl2_score, new_red_gl2_rd, new_red_gl2_vol = an.Metric().glicko2(red_gl2["score"], red_gl2["rd"], red_gl2["vol"], [blu_gl2["score"]], [blu_gl2["rd"]], [observations["red"], observations["blu"]])
-			new_blu_gl2_score, new_blu_gl2_rd, new_blu_gl2_vol = an.Metric().glicko2(blu_gl2["score"], blu_gl2["rd"], blu_gl2["vol"], [red_gl2["score"]], [red_gl2["rd"]], [observations["blu"], observations["red"]])
+			new_red_gl2_score, new_red_gl2_rd, new_red_gl2_vol = an.Metric().glicko2(red_gl2["score"], red_gl2["rd"], red_gl2["vol"], [blu_gl2["score"]], [blu_gl2["rd"]], [observations["red"], observations["blu"]]) # calculate new scores for gl2 for red
+			new_blu_gl2_score, new_blu_gl2_rd, new_blu_gl2_vol = an.Metric().glicko2(blu_gl2["score"], blu_gl2["rd"], blu_gl2["vol"], [red_gl2["score"]], [red_gl2["rd"]], [observations["blu"], observations["red"]]) # calculate new scores for gl2 for blue
 
-			red_gl2_delta = {"score": new_red_gl2_score - red_gl2["score"], "rd": new_red_gl2_rd - red_gl2["rd"], "vol": new_red_gl2_vol - red_gl2["vol"]}
-			blu_gl2_delta = {"score": new_blu_gl2_score - blu_gl2["score"], "rd": new_blu_gl2_rd - blu_gl2["rd"], "vol": new_blu_gl2_vol - blu_gl2["vol"]}
+			red_gl2_delta = {"score": new_red_gl2_score - red_gl2["score"], "rd": new_red_gl2_rd - red_gl2["rd"], "vol": new_red_gl2_vol - red_gl2["vol"]} # calculate gl2 deltas for red
+			blu_gl2_delta = {"score": new_blu_gl2_score - blu_gl2["score"], "rd": new_blu_gl2_rd - blu_gl2["rd"], "vol": new_blu_gl2_vol - blu_gl2["vol"]} # calculate gl2 deltas for blue
 
-			for team in red:
+			for team in red: # for each team on red, add the previous score with the delta to find the new score
 
 				red[team]["elo"]["score"] = red[team]["elo"]["score"] + red_elo_delta
 
@@ -249,7 +249,7 @@ class Metric (Module):
 				red[team]["gl2"]["rd"] = red[team]["gl2"]["rd"] + red_gl2_delta["rd"]
 				red[team]["gl2"]["vol"] = red[team]["gl2"]["vol"] + red_gl2_delta["vol"]
 
-			for team in blu:
+			for team in blu: # for each team on blue, add the previous score with the delta to find the new score
 
 				blu[team]["elo"]["score"] = blu[team]["elo"]["score"] + blu_elo_delta
 
@@ -258,10 +258,10 @@ class Metric (Module):
 				blu[team]["gl2"]["vol"] = blu[team]["gl2"]["vol"] + blu_gl2_delta["vol"]
 
 			temp_vector = {}
-			temp_vector.update(red)
+			temp_vector.update(red) # update the team's score with the temporay vector
 			temp_vector.update(blu)
 
-			d.push_metric(self.apikey, self.competition, temp_vector)
+			d.push_metric(self.apikey, self.competition, temp_vector) # push new scores to db
 
 	def _push_results(self):
 		pass
