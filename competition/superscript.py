@@ -154,7 +154,7 @@ import pymongo # soon to be deprecated
 import traceback
 import warnings
 from config import Configuration, ConfigurationError
-from data import get_previous_time, set_current_time, check_new_database_matches
+from data import get_previous_time, set_current_time, check_new_database_matches, clear_metrics
 from interface import Logger
 from module import Match, Metric, Pit
 import zmq
@@ -205,7 +205,7 @@ def main(logger, verbose, profile, debug, socket_send = None):
 			config.resolve_config_conflicts(logger, client)
 
 			config_modules, competition = config.modules, config.competition
-
+			clear_metrics(client, config.competition)
 			for m in config_modules:
 				if m in modules:
 					start = time.time()

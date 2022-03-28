@@ -174,8 +174,6 @@ class Metric (Module):
 
 	def _process_data(self):
 
-		d.clear_metrics(self.apikey, self.competition)
-
 		elo_N = self.config["tests"]["elo"]["N"]
 		elo_K = self.config["tests"]["elo"]["K"]
 
