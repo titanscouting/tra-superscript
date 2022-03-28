@@ -13,3 +13,4 @@ scikit-learn
 scipy
 six
 tra-analysis
+trueskill
