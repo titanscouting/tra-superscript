@@ -1,10 +1,8 @@
 import abc
 import data as d
 import signal
-import trueskill
 import numpy as np
 from tra_analysis import Analysis as an
-from ts_predict import win_probability
 
 class Module(metaclass = abc.ABCMeta):
 
@@ -182,9 +180,9 @@ class Metric (Module):
 
 		red = {}
 		blu = {}
-		
+
 		for match in matches:
-			
+
 			red = d.load_metric(self.apikey, self.competition, match, "red", self.config["tests"])
 			blu = d.load_metric(self.apikey, self.competition, match, "blue", self.config["tests"])
 	
@@ -200,9 +198,6 @@ class Metric (Module):
 			gl2_red_vol_total = 0
 			gl2_blu_vol_total = 0
 
-			ts_red_team = {}
-			ts_blu_team = {}
-
 			for team in red:
 
 				elo_red_total += red[team]["elo"]["score"]
@@ -210,10 +205,6 @@ class Metric (Module):
 				gl2_red_score_total += red[team]["gl2"]["score"]
 				gl2_red_rd_total += red[team]["gl2"]["rd"]
 				gl2_red_vol_total += red[team]["gl2"]["vol"]
-
-				tmu = red[team]["ts"]["mu"] or 25
-				tsigma = red[team]["ts"]["sigma"] or 8.333
-				ts_red_team[team] = trueskill.Rating(mu=tmu, sigma=tsigma)
 
 			for team in blu:
 
@@ -223,43 +214,25 @@ class Metric (Module):
 				gl2_blu_rd_total += blu[team]["gl2"]["rd"]
 				gl2_blu_vol_total += blu[team]["gl2"]["vol"]
 
-				tmu = blu[team]["ts"]["mu"] or 25
-				tsigma = blu[team]["ts"]["sigma"] or 8.333
-				ts_blu_team[team] = trueskill.Rating(mu=tmu, sigma=tsigma)
-			
 			red_elo = {"score": elo_red_total / len(red)}
 			blu_elo = {"score": elo_blu_total / len(blu)}
 
 			red_gl2 = {"score": gl2_red_score_total / len(red), "rd": gl2_red_rd_total / len(red), "vol": gl2_red_vol_total / len(red)}
 			blu_gl2 = {"score": gl2_blu_score_total / len(blu), "rd": gl2_blu_rd_total / len(blu), "vol": gl2_blu_vol_total / len(blu)}
-			print('here')
+
 
 			if match["winner"] == "red":
 
 				observations = {"red": 1, "blu": 0}
-				ts_obs = [1,0]
 
 			elif match["winner"] == "blue":
 
 				observations = {"red": 0, "blu": 1}
-				ts_obs = [0,1]
 
 			else:
 
 				observations = {"red": 0.5, "blu": 0.5}
-				ts_obs = [0,0]
 
-			ts_red = list(ts_red_team.values())
-			ts_blu = list(ts_blu_team.values())
-			new_red, new_blu = trueskill.rate([ts_red, ts_blu], ranks=ts_obs)
-			new_red_ts = {}
-			new_blu_ts = {}
-			for key, value in zip(ts_red_team.keys(), new_red):
-				new_red_ts[key] = value
-			for key, value in zip(ts_blu_team.keys(), new_blu):
-				new_blu_ts[key] = value
-			print("red" if win_probability(new_red, new_blu) > 0.5 else "blue", match["winner"])
-			# now there are new trueskll ratings for each team based on the win/loss from DB
 			red_elo_delta = an.Metric().elo(red_elo["score"], blu_elo["score"], observations["red"], elo_N, elo_K) - red_elo["score"]
 			blu_elo_delta = an.Metric().elo(blu_elo["score"], red_elo["score"], observations["blu"], elo_N, elo_K) - blu_elo["score"]
 
@@ -277,9 +250,6 @@ class Metric (Module):
 				red[team]["gl2"]["rd"] = red[team]["gl2"]["rd"] + red_gl2_delta["rd"]
 				red[team]["gl2"]["vol"] = red[team]["gl2"]["vol"] + red_gl2_delta["vol"]
 
-				red[team]["ts"]["mu"] = new_red_ts[team].mu
-				red[team]["ts"]["sigma"] = new_red_ts[team].sigma
-
 			for team in blu:
 
 				blu[team]["elo"]["score"] = blu[team]["elo"]["score"] + blu_elo_delta
@@ -288,10 +258,6 @@ class Metric (Module):
 				blu[team]["gl2"]["rd"] = blu[team]["gl2"]["rd"] + blu_gl2_delta["rd"]
 				blu[team]["gl2"]["vol"] = blu[team]["gl2"]["vol"] + blu_gl2_delta["vol"]
 
-				
-				blu[team]["ts"]["mu"] = new_blu_ts[team].mu
-				blu[team]["ts"]["sigma"] = new_blu_ts[team].sigma
-			
 			temp_vector = {}
 			temp_vector.update(red)
 			temp_vector.update(blu)
