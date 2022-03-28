@@ -3,6 +3,7 @@ import data as d
 import signal
 import numpy as np
 from tra_analysis import Analysis as an
+from tqdm import tqdm
 
 class Module(metaclass = abc.ABCMeta):
 
@@ -173,6 +174,8 @@ class Metric (Module):
 
 	def _process_data(self):
 
+		d.clear_metrics(self.apikey, self.competition)
+
 		elo_N = self.config["tests"]["elo"]["N"]
 		elo_K = self.config["tests"]["elo"]["K"]
 
@@ -180,9 +183,7 @@ class Metric (Module):
 
 		red = {}
 		blu = {}
-
-		for match in matches:
-
+		for match in tqdm(matches, desc="Metrics"):
 			red = d.load_metric(self.apikey, self.competition, match, "red", self.config["tests"])
 			blu = d.load_metric(self.apikey, self.competition, match, "blue", self.config["tests"])
 	

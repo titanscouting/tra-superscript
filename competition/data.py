@@ -11,6 +11,7 @@ def pull_new_tba_matches(apikey, competition, cutoff):
 	for i in json:
 		if i["actual_time"] != None and i["comp_level"] == "qm":
 			out.append({"match" : i['match_number'], "blue" : list(map(lambda x: int(x[3:]), i['alliances']['blue']['team_keys'])), "red" : list(map(lambda x: int(x[3:]), i['alliances']['red']['team_keys'])), "winner": i["winning_alliance"]})
+	out.sort(key=lambda x: x['match'])
 	return out
 
 def pull_new_tba_matches_manual(apikey, competition, cutoff):
@@ -26,6 +27,12 @@ def get_team_match_data(client, competition, team_num):
 	for i in mdata.find({"competition" : competition, "team_scouted": str(team_num)}):
 		out[i['match']] = i['data']
 	return pd.DataFrame(out)
+
+def clear_metrics(client, competition):
+	db = client.data_processing
+	data = db.team_metrics
+	data.delete_many({competition: competition})
+	return True
 
 def get_team_pit_data(client, competition, team_num):
 	db = client.data_scouting
