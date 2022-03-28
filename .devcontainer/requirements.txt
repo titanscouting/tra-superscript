@@ -6,8 +6,6 @@ pylint
 pymongo
 pyparsing
 pytest
-python-daemon
-pyzmq
 requests
 scikit-learn
 scipy
