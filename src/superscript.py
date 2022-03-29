@@ -301,7 +301,7 @@ if __name__ == "__main__":
 	elif len(sys.argv) == 3:
 		config_path = sys.argv[2]
 	else:
-		print("usage: %s verbose|profile|debug" % sys.argv[0])
+		print("usage: %s verbose|profile|debug <config path>" % sys.argv[0])
 		sys.exit(2)
 
 	if 'verbose' == sys.argv[1]:
@@ -311,7 +311,7 @@ if __name__ == "__main__":
 	elif 'debug' == sys.argv[1]:
 		start(False, False, True, config_path = config_path)
 	else:
-		print("usage: %s verbose|profile|debug" % sys.argv[0])
+		print("usage: %s verbose|profile|debug <config path>" % sys.argv[0])
 		sys.exit(2)
 
 	sys.exit(0)
