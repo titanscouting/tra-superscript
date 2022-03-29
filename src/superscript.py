@@ -154,7 +154,6 @@ from data import Client
 from interface import Logger
 from module import Match, Metric, Pit
 
-#def main(logger, verbose, profile, debug, socket_send = None):
 def main(logger, verbose, profile, debug, config_path):
 
 	def close_all():
@@ -260,7 +259,6 @@ def start(verbose, profile, debug, config_path):
 		import cProfile, pstats, io
 		profile = cProfile.Profile()
 		profile.enable()
-		#exit_code = main(logger, verbose, profile, debug, socket_send = send)
 		exit_code = main(logger, verbose, profile, debug, config_path)
 		profile.disable()
 		f = open("profile.txt", 'w+')
@@ -272,7 +270,6 @@ def start(verbose, profile, debug, config_path):
 
 		logger = Logger(verbose, profile, debug)
 
-		#exit_code = main(logger, verbose, profile, debug, socket_send = send)
 		exit_code = main(logger, verbose, profile, debug, config_path)
 		sys.exit(exit_code)
 
@@ -280,7 +277,6 @@ def start(verbose, profile, debug, config_path):
 
 		logger = Logger(verbose, profile, debug)
 
-		#exit_code = main(logger, verbose, profile, debug, socket_send = send)
 		exit_code = main(logger, verbose, profile, debug, config_path)
 		sys.exit(exit_code)
 
