@@ -1,5 +1,4 @@
 import abc
-import data as d
 import signal
 import numpy as np
 from tra_analysis import Analysis as an
@@ -28,20 +27,16 @@ class Module(metaclass = abc.ABCMeta):
 class Match (Module):
 
 	config = None
-	apikey = None
-	tbakey = None
 	timestamp = None
-	competition = None
+	client = None
 
 	data = None
 	results = None
 	
-	def __init__(self, config, apikey, tbakey, timestamp, competition):
+	def __init__(self, config, timestamp, client):
 		self.config = config
-		self.apikey = apikey
-		self.tbakey = tbakey
 		self.timestamp = timestamp
-		self.competition = competition
+		self.client = client
 
 	def validate_config(self):
 		return True, ""
@@ -52,7 +47,7 @@ class Match (Module):
 		self._push_results()
 
 	def _load_data(self):
-		self.data = d.load_match(self.apikey, self.competition)
+		self.data = self.client.load_match()
 
 	def _simplestats(self, data_test):
 
@@ -140,25 +135,21 @@ class Match (Module):
 
 		self.results = return_vector
 
-		d.push_match(self.apikey, self.competition, self.results)
+		self.client.push_match(self.results)
 
 class Metric (Module):
 
 	config = None
-	apikey = None
-	tbakey = None
 	timestamp = None
-	competition = None
+	client = None
 
 	data = None
 	results = None
 	
-	def __init__(self, config, apikey, tbakey, timestamp, competition):
+	def __init__(self, config, timestamp, client):
 		self.config = config
-		self.apikey = apikey
-		self.tbakey = tbakey
 		self.timestamp = timestamp
-		self.competition = competition
+		self.client = client
 
 	def validate_config(self):
 		return True, ""
@@ -169,7 +160,7 @@ class Metric (Module):
 		self._push_results()
 
 	def _load_data(self):
-		self.data = d.pull_new_tba_matches(self.tbakey, self.competition, self.timestamp)
+		self.data = self.client.pull_new_tba_matches(self.timestamp)
 
 	def _process_data(self):
 
@@ -183,8 +174,8 @@ class Metric (Module):
 
 		for match in matches:
 
-			red = d.load_metric(self.apikey, self.competition, match, "red", self.config["tests"])
-			blu = d.load_metric(self.apikey, self.competition, match, "blue", self.config["tests"])
+			red = self.client.load_metric(match, "red", self.config["tests"])
+			blu = self.client.load_metric(match, "blue", self.config["tests"])
 	
 			elo_red_total = 0
 			elo_blu_total = 0
@@ -262,7 +253,7 @@ class Metric (Module):
 			temp_vector.update(red)
 			temp_vector.update(blu)
 
-			d.push_metric(self.apikey, self.competition, temp_vector)
+			self.client.push_metric(temp_vector)
 
 	def _push_results(self):
 		pass
@@ -270,20 +261,16 @@ class Metric (Module):
 class Pit (Module):
 
 	config = None
-	apikey = None
-	tbakey = None
 	timestamp = None
-	competition = None
+	client = None
 
 	data = None
 	results = None
 	
-	def __init__(self, config, apikey, tbakey, timestamp, competition):
+	def __init__(self, config, timestamp, client):
 		self.config = config
-		self.apikey = apikey
-		self.tbakey = tbakey
 		self.timestamp = timestamp
-		self.competition = competition
+		self.client = client
 	
 	def validate_config(self):
 		return True, ""
@@ -294,7 +281,7 @@ class Pit (Module):
 		self._push_results()
 
 	def _load_data(self):
-		self.data = d.load_pit(self.apikey, self.competition)
+		self.data = self.client.load_pit()
 
 	def _process_data(self):
 		tests = self.config["tests"]
@@ -309,7 +296,7 @@ class Pit (Module):
 		self.results = return_vector
 
 	def _push_results(self):
-		d.push_pit(self.apikey, self.competition, self.results)
+		self.client.push_pit(self.results)
 
 class Rating (Module):
 	pass

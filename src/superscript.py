@@ -148,12 +148,9 @@ __author__ = (
 
 # imports:
 
-import os, sys, time
-import pymongo # soon to be deprecated
-import traceback
-import warnings
+import sys, time, traceback, warnings
 from config import Configuration, ConfigurationError
-from data import get_previous_time, set_current_time, check_new_database_matches
+from data import Client
 from interface import Logger
 from module import Match, Metric, Pit
 
@@ -182,25 +179,24 @@ def main(logger, verbose, profile, debug, config_path):
 			
 			logger.info("found and loaded config at <" + config_path + ">")
 
-			apikey, tbakey = config.database, config.tba
-
-			logger.info("found and loaded database and tba keys")
-
-			client = pymongo.MongoClient(apikey)
+			client = Client(config)
 
 			logger.info("established connection to database")
 
-			previous_time = get_previous_time(client)
+			previous_time = client.get_previous_time()
 
 			logger.info("analysis backtimed to: " + str(previous_time))
 
 			config.resolve_config_conflicts(logger, client)
 
 			config_modules, competition = config.modules, config.competition
+
+			client.competition = competition
+
 			for m in config_modules:
 				if m in modules:
 					start = time.time()
-					current_module = modules[m](config_modules[m], client, tbakey, previous_time, competition)
+					current_module = modules[m](config_modules[m], previous_time, client)
 					valid = current_module.validate_config()
 					if not valid:
 						continue
@@ -209,7 +205,7 @@ def main(logger, verbose, profile, debug, config_path):
 					if debug:
 						logger.save_module_to_file(m, current_module.data, current_module.results) # logging flag check done in logger
 
-			set_current_time(client, loop_start)
+			client.set_current_time(loop_start)
 			close_all()
 
 			logger.info("closed threads and database client")
@@ -227,7 +223,7 @@ def main(logger, verbose, profile, debug, config_path):
 				new_match = False
 				while not new_match:
 					time.sleep(1)
-					new_match = check_new_database_matches(client, competition)
+					new_match = client.check_new_database_matches()
 				logger.info("database returned new matches")
 			else:
 				loop_delay = float(config["variable"]["loop-delay"])

@@ -2,8 +2,6 @@ import json
 from exceptions import ConfigurationError
 from cerberus import Validator
 
-from data import set_database_config, get_database_config
-
 class Configuration:
 
 	path = None
@@ -215,14 +213,14 @@ class Configuration:
 		if sync:
 			if priority == "local" or priority == "client":
 				logger.info("config-preference set to local/client, loading local config information")
-				remote_config = get_database_config(client)
+				remote_config = client.get_database_config()
 				if remote_config != self.config["variable"]:
-					set_database_config(client, self.config["variable"])
+					client.set_database_config(self.config["variable"])
 					logger.info("database config was different and was updated")
 				# no change to config
 			elif priority == "remote" or priority == "database":
 				logger.info("config-preference set to remote/database, loading remote config information")
-				remote_config = get_database_config(client)
+				remote_config = client.get_database_config()
 				if remote_config != self.config["variable"]:
 					self.config["variable"] = remote_config
 					self.save_config()
@@ -236,7 +234,7 @@ class Configuration:
 				# no change to config
 			elif priority == "remote" or priority == "database":
 				logger.info("config-preference set to remote/database, loading database config information")
-				self.config["variable"] = get_database_config(client)
+				self.config["variable"] = client.get_database_config()
 				# change variable to match remote without updating local version
 			else:
 				raise ConfigurationError("persistent/config-preference field must be \"local\"/\"client\" or \"remote\"/\"database\"")
