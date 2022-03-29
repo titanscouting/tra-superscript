@@ -148,7 +148,7 @@ __author__ = (
 
 # imports:
 
-import sys, time, traceback, warnings
+import argparse, sys, time, traceback, warnings
 from config import Configuration, ConfigurationError
 from data import Client
 from interface import Logger
@@ -261,8 +261,8 @@ def start(verbose, profile, debug, config_path):
 		profile.enable()
 		exit_code = main(logger, verbose, profile, debug, config_path)
 		profile.disable()
-		f = open("profile.txt", 'w+')
-		ps = pstats.Stats(profile, stream = f).sort_stats('cumtime')
+		f = open("profile.txt", "w+")
+		ps = pstats.Stats(profile, stream = f).sort_stats("cumtime")
 		ps.print_stats()
 		sys.exit(exit_code)
 
@@ -286,24 +286,21 @@ def start(verbose, profile, debug, config_path):
 
 if __name__ == "__main__":
 
-	config_path = 'config.json'
+	parser = argparse.ArgumentParser(description = "TRA data processing application.")
+	parser.add_argument("mode", metavar = "MODE", type = str, nargs = 1, choices = ["verbose", "profile", "debug"], help = "verbose, debug, profile")
+	parser.add_argument("--config", dest = "config", default = "config.json", type = str, help = "path to config file")
+	parser.add_argument("--logfile", dest = "logfile", default = "logfile", type = str, help = "path to log file")
 
-	if len(sys.argv) == 2:
-		pass
-	elif len(sys.argv) == 3:
-		config_path = sys.argv[2]
-	else:
-		print("usage: %s verbose|profile|debug <config path>" % sys.argv[0])
-		sys.exit(2)
+	args = parser.parse_args()
 
-	if 'verbose' == sys.argv[1]:
+	mode = args.mode[0]
+	config_path = args.config
+	log_path = args.logfile
+	if mode == "verbose":
 		start(True, False, False, config_path = config_path)
-	elif 'profile' == sys.argv[1]:
+	elif mode == "profile":
 		start(False, True, False, config_path = config_path)
-	elif 'debug' == sys.argv[1]:
+	elif mode == "debug":
 		start(False, False, True, config_path = config_path)
-	else:
-		print("usage: %s verbose|profile|debug <config path>" % sys.argv[0])
-		sys.exit(2)
-
-	sys.exit(0)
+	
+	exit(0)

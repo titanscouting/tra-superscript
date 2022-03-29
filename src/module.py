@@ -255,8 +255,6 @@ class Metric (Module):
 			temp_vector.update(red)
 			temp_vector.update(blu)
 
-			print(match)
-
 			self.results[match['match']] = temp_vector
 
 			self.client.push_metric(temp_vector)
