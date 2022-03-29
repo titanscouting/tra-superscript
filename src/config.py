@@ -185,32 +185,23 @@ class Configuration:
 		if not isValidated:
 			raise ConfigurationError("config validation error: " + v.errors)
 
-	def __getattr__(self, name): # simple linear lookup method for common multikey-value paths, TYPE UNSAFE
-		if name == "persistent":
-			return self.config["persistent"]
-		elif name == "key":
-			return self.config["persistent"]["key"]
-		elif name == "database":
-			# soon to be deprecated
-			return self.config["persistent"]["key"]["database"]
-		elif name == "tba":
-			return self.config["persistent"]["key"]["tba"]
-		elif name == "tra":
-			return self.config["persistent"]["key"]["tra"]
-		elif name == "priority":
-			return self.config["persistent"]["config-preference"]
-		elif name == "sync":
-			return self.config["persistent"]["synchronize-config"]
-		elif name == "variable":
-			return self.config["variable"]
-		elif name == "event_delay":
-			return self.config["variable"]["event-delay"]
-		elif name == "loop_delay":
-			return self.config["variable"]["loop-delay"]
-		elif name == "competition":
-			return self.config["variable"]["competition"]
-		elif name == "modules":
-			return self.config["variable"]["modules"]
+	def __getattr__(self, name): # better hashed lookup method for common multikey-value paths, TYPE UNSAFE
+		attr_lookup = {
+			"persistent": self.config["persistent"],
+			"key": self.config["persistent"]["key"],
+			"database": self.config["persistent"]["key"]["database"],
+			"tba": self.config["persistent"]["key"]["tba"],
+			"tra": self.config["persistent"]["key"]["tra"],
+			"priority": self.config["persistent"]["config-preference"],
+			"sync": self.config["persistent"]["synchronize-config"],
+			"variable": self.config["variable"],
+			"event_delay": self.config["variable"]["event-delay"],
+			"loop_delay": self.config["variable"]["loop-delay"],
+			"competition": self.config["variable"]["competition"],
+			"modules": self.config["variable"]["modules"]
+		}
+		if name in attr_lookup.keys():
+			return attr_lookup[name]
 		else:
 			return None
 

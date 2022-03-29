@@ -149,18 +149,14 @@ __author__ = (
 
 # imports:
 
-from distutils.command.config import config
 import os, sys, time
 import pymongo # soon to be deprecated
 import traceback
 import warnings
 from config import Configuration, ConfigurationError
-from data import get_previous_time, set_current_time, check_new_database_matches, clear_metrics
+from data import get_previous_time, set_current_time, check_new_database_matches
 from interface import Logger
 from module import Match, Metric, Pit
-import zmq
-
-
 
 #def main(logger, verbose, profile, debug, socket_send = None):
 def main(logger, verbose, profile, debug, config_path):
@@ -207,7 +203,6 @@ def main(logger, verbose, profile, debug, config_path):
 			config.resolve_config_conflicts(logger, client)
 
 			config_modules, competition = config.modules, config.competition
-			clear_metrics(client, config.competition)
 			for m in config_modules:
 				if m in modules:
 					start = time.time()
@@ -338,9 +333,9 @@ if __name__ == "__main__":
 	if 'verbose' == sys.argv[1]:
 		start(None, True, False, False, config_path = config_path)
 	elif 'profile' == sys.argv[1]:
-		start(None, True, False, False, config_path = config_path)
+		start(None, False, True, False, config_path = config_path)
 	elif 'debug' == sys.argv[1]:
-		start(None, True, False, False, config_path = config_path)
+		start(None, False, False, True, config_path = config_path)
 	else:
 		print("usage: %s verbose|profile|debug" % sys.argv[0])
 		sys.exit(2)
