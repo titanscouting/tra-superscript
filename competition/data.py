@@ -9,7 +9,7 @@ def pull_new_tba_matches(apikey, competition, cutoff):
 	json = x.json()
 	out = []
 	for i in json:
-		if i["actual_time"] != None and i["comp_level"] == "qm":
+		if i["actual_time"] != None and i["comp_level"] == "qm" and i["actual_time"]-cutoff >= 0:
 			out.append({"match" : i['match_number'], "blue" : list(map(lambda x: int(x[3:]), i['alliances']['blue']['team_keys'])), "red" : list(map(lambda x: int(x[3:]), i['alliances']['red']['team_keys'])), "winner": i["winning_alliance"]})
 	out.sort(key=lambda x: x['match'])
 	return out
@@ -17,8 +17,8 @@ def pull_new_tba_matches(apikey, competition, cutoff):
 def pull_new_tba_matches_manual(apikey, competition, cutoff):
 	filename = competition+"-wins.json"
 	with open(filename, 'r') as f:
-  		data = json.load(f)
-	return data
+		data = json.load(f)
+		return data
 
 def get_team_match_data(client, competition, team_num):
 	db = client.data_scouting

@@ -205,7 +205,6 @@ def main(logger, verbose, profile, debug, socket_send = None):
 			config.resolve_config_conflicts(logger, client)
 
 			config_modules, competition = config.modules, config.competition
-			clear_metrics(client, config.competition)
 			for m in config_modules:
 				if m in modules:
 					start = time.time()
