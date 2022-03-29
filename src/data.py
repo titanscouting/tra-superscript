@@ -16,12 +16,14 @@ class Client:
 
 	def pull_new_tba_matches(self, cutoff):
 		competition = self.competition
-		api_key= self.tbakey 
+		api_key= self.tbakey
 		x=requests.get("https://www.thebluealliance.com/api/v3/event/"+competition+"/matches/simple", headers={"X-TBA-Auth-Key":api_key})
+		json = x.json()
 		out = []
-		for i in x.json():
-			if i["actual_time"] != None and i["actual_time"]-cutoff >= 0 and i["comp_level"] == "qm":
+		for i in json:
+			if i["actual_time"] != None and i["comp_level"] == "qm":
 				out.append({"match" : i['match_number'], "blue" : list(map(lambda x: int(x[3:]), i['alliances']['blue']['team_keys'])), "red" : list(map(lambda x: int(x[3:]), i['alliances']['red']['team_keys'])), "winner": i["winning_alliance"]})
+		out.sort(key=lambda x: x['match'])
 		return out
 
 	def get_team_match_data(self, team_num):

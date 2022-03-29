@@ -164,6 +164,8 @@ class Metric (Module):
 
 	def _process_data(self):
 
+		self.results = {}
+
 		elo_N = self.config["tests"]["elo"]["N"]
 		elo_K = self.config["tests"]["elo"]["K"]
 
@@ -252,6 +254,10 @@ class Metric (Module):
 			temp_vector = {}
 			temp_vector.update(red)
 			temp_vector.update(blu)
+
+			print(match)
+
+			self.results[match['match']] = temp_vector
 
 			self.client.push_metric(temp_vector)
 
