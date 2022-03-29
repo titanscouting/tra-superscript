@@ -174,6 +174,8 @@ class Metric (Module):
 
 	def _process_data(self):
 
+		self.results = {}
+
 		matches = self.data
 
 		red = {}
@@ -242,6 +244,8 @@ class Metric (Module):
 			temp_vector = {}
 			temp_vector.update(red) # update the team's score with the temporay vector
 			temp_vector.update(blu)
+
+			self.results[match['match']] = temp_vector
 
 			d.push_metric(self.apikey, self.competition, temp_vector) # push new scores to db
 
