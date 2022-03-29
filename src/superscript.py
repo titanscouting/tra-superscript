@@ -178,27 +178,22 @@ def main(logger, verbose, profile, debug, config_path):
 			loop_start = time.time()
 
 			logger.info("current time: " + str(loop_start))
-			#socket_send("current time: " + str(loop_start))
 
 			config = Configuration(config_path)
 			
 			logger.info("found and loaded config at <" + config_path + ">")
-			#socket_send("found and loaded config at <" + config_path + ">")
 
 			apikey, tbakey = config.database, config.tba
 
 			logger.info("found and loaded database and tba keys")
-			#socket_send("found and loaded database and tba keys")
 
 			client = pymongo.MongoClient(apikey)
 
 			logger.info("established connection to database")
-			#socket_send("established connection to database")
 
 			previous_time = get_previous_time(client)
 
 			logger.info("analysis backtimed to: " + str(previous_time))
-			#socket_send("analysis backtimed to: " + str(previous_time))
 
 			config.resolve_config_conflicts(logger, client)
 
@@ -212,7 +207,6 @@ def main(logger, verbose, profile, debug, config_path):
 						continue
 					current_module.run()
 					logger.info(m + " module finished in " + str(time.time() - start) + " seconds")
-					#socket_send(m + " module finished in " + str(time.time() - start) + " seconds")
 					if debug:
 						logger.save_module_to_file(m, current_module.data, current_module.results) # logging flag check done in logger
 
@@ -221,8 +215,6 @@ def main(logger, verbose, profile, debug, config_path):
 
 			logger.info("closed threads and database client")
 			logger.info("finished all tasks in " + str(time.time() - loop_start) + " seconds, looping")
-			#socket_send("closed threads and database client")
-			#socket_send("finished all tasks in " + str(time.time() - loop_start) + " seconds, looping")
 
 			if profile:
 				return 0
@@ -233,33 +225,27 @@ def main(logger, verbose, profile, debug, config_path):
 			event_delay = config["variable"]["event-delay"]
 			if event_delay:
 				logger.info("loop delayed until database returns new matches")
-				#socket_send("loop delayed until database returns new matches")
 				new_match = False
 				while not new_match:
 					time.sleep(1)
 					new_match = check_new_database_matches(client, competition)
 				logger.info("database returned new matches")
-				#socket_send("database returned new matches")
 			else:
 				loop_delay = float(config["variable"]["loop-delay"])
 				remaining_time = loop_delay - (time.time() - loop_start)
 				if remaining_time > 0:
 					logger.info("loop delayed by " + str(remaining_time) + " seconds")
-					#socket_send("loop delayed by " + str(remaining_time) + " seconds")
 					time.sleep(remaining_time)
 
 		except KeyboardInterrupt:
 			close_all()
 			logger.info("detected KeyboardInterrupt, exiting")
-			#socket_send("detected KeyboardInterrupt, exiting")
 			return 0
 
 		except ConfigurationError as e:
 			str_e = "".join(traceback.format_exception(e))
 			logger.error("encountered a configuration error: " + str(e))
 			logger.error(str_e)
-			#socket_send("encountered a configuration error: " + str(e))
-			#socket_send(str_e)
 			close_all()
 			return 1
 
@@ -267,12 +253,10 @@ def main(logger, verbose, profile, debug, config_path):
 			str_e = "".join(traceback.format_exception(e))
 			logger.error("encountered an exception while running")
 			logger.error(str_e)
-			#socket_send("encountered an exception while running")
-			#socket_send(str_e)
 			close_all()
 			return 1
 
-def start(pid_path, verbose, profile, debug, config_path):
+def start(verbose, profile, debug, config_path):
 
 	if profile:
 
@@ -331,11 +315,11 @@ if __name__ == "__main__":
 		sys.exit(2)
 
 	if 'verbose' == sys.argv[1]:
-		start(None, True, False, False, config_path = config_path)
+		start(True, False, False, config_path = config_path)
 	elif 'profile' == sys.argv[1]:
-		start(None, False, True, False, config_path = config_path)
+		start(False, True, False, config_path = config_path)
 	elif 'debug' == sys.argv[1]:
-		start(None, False, False, True, config_path = config_path)
+		start(False, False, True, config_path = config_path)
 	else:
 		print("usage: %s verbose|profile|debug" % sys.argv[0])
 		sys.exit(2)
