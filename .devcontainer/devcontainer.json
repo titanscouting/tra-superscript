@@ -9,9 +9,10 @@
 		"python.linting.enabled": true,
 		"python.linting.pylintEnabled": true,
 		"python.linting.pylintPath": "/usr/local/bin/pylint",
+		"python.linting.pylintArgs": ["--indent-string", "\t"],
 		"python.testing.pytestPath": "/usr/local/bin/pytest",
-    "editor.tabSize": 4,
-    "editor.insertSpaces": false
+    	"editor.tabSize": 4,
+    	"editor.insertSpaces": false
 	},
 	"extensions": [
 		"mhutchie.git-graph",
