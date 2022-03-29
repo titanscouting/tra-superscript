@@ -15,7 +15,7 @@ class Module(metaclass = abc.ABCMeta):
 				callable(subclass.run)
 				)
 	@abc.abstractmethod
-	def __init__(self, config, apikey, tbakey, timestamp, competition, *args, **kwargs):
+	def __init__(self, *args, **kwargs):
 		raise NotImplementedError
 	@abc.abstractmethod
 	def validate_config(self, *args, **kwargs):
