@@ -260,9 +260,6 @@ def start(verbose, profile, debug, config_path):
 
 	if profile:
 
-		def send(msg):
-			pass
-
 		logger = Logger(verbose, profile, debug)
 
 		import cProfile, pstats, io
@@ -278,9 +275,6 @@ def start(verbose, profile, debug, config_path):
 
 	elif verbose:
 
-		def send(msg):
-			pass
-
 		logger = Logger(verbose, profile, debug)
 
 		#exit_code = main(logger, verbose, profile, debug, socket_send = send)
@@ -288,9 +282,6 @@ def start(verbose, profile, debug, config_path):
 		sys.exit(exit_code)
 
 	elif debug:
-
-		def send(msg):
-			pass
 
 		logger = Logger(verbose, profile, debug)
 
