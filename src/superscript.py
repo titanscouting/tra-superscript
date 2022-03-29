@@ -9,8 +9,7 @@ __version__ = "1.0.0"
 __changelog__ = """changelog:
 	1.0.0:
 		- superscript now runs in PEP 3143 compliant well behaved daemon on Linux systems
-		- linux superscript daemon has integrated websocket output to monitor progress/status remotely
-		- linux daemon now sends stderr to errorlog.log
+		- removed daemon and socket functionality, user can implement using external software
 		- added verbose option to linux superscript to allow for interactive output
 		- moved pymongo import to superscript.py
 		- added profile option to linux superscript to profile runtime of script
