@@ -168,22 +168,17 @@ def load_metric(client, competition, match, group_name, metrics):
 		db_data = get_team_metrics_data(client, competition, team)
 
 		if db_data == None:
-
-			elo = {"score": metrics["elo"]["score"]}
 			gl2 = {"score": metrics["gl2"]["score"], "rd": metrics["gl2"]["rd"], "vol": metrics["gl2"]["vol"]}
-			ts = {"mu": metrics["ts"]["mu"], "sigma": metrics["ts"]["sigma"]}
 
-			group[team] = {"elo": elo, "gl2": gl2, "ts": ts}
+			group[team] = {"gl2": gl2}
 
 		else:
 
 			metrics = db_data["metrics"]
 
-			elo = metrics["elo"]
 			gl2 = metrics["gl2"]
-			ts = metrics["ts"]
 
-			group[team] = {"elo": elo, "gl2": gl2, "ts": ts}
+			group[team] = {"gl2": gl2}
 
 	return group
 

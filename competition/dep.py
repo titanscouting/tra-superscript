@@ -96,20 +96,11 @@ sample_json = """
          },
          "metric":{
             "tests":{
-               "elo":{
-                  "score":1500,
-                  "N":400,
-                  "K":24
-               },
                "gl2":{
                   "score":1500,
                   "rd":250,
                   "vol":0.06
                },
-               "ts":{
-                  "mu":25,
-                  "sigma":8.33
-               }
             }
          },
          "pit":{
