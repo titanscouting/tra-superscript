@@ -1,3 +1,4 @@
+from calendar import c
 import requests
 import pull
 import pandas as pd
@@ -43,7 +44,15 @@ def get_team_pit_data(client, competition, team_num):
 def get_team_metrics_data(client, competition, team_num):
 	db = client.data_processing
 	mdata = db.team_metrics
-	return mdata.find_one({"competition" : competition, "team": team_num})
+	temp = mdata.find_one({"team": team_num})
+	if temp != None:
+		if competition in temp['metrics'].keys():
+			temp = temp['metrics'][competition]
+		else :
+			temp = None
+	else:
+		temp = None
+	return temp
 
 def get_match_data_formatted(client, competition):
 	teams_at_comp = pull.get_teams_at_competition(competition)
@@ -99,7 +108,7 @@ def push_team_tests_data(client, competition, team_num, data, dbname = "data_pro
 def push_team_metrics_data(client, competition, team_num, data, dbname = "data_processing", colname = "team_metrics"):
 	db = client[dbname]
 	mdata = db[colname]
-	mdata.replace_one({"competition" : competition, "team": team_num}, {"_id": competition+str(team_num)+"am", "competition" : competition, "team" : team_num, "metrics" : data}, True)
+	mdata.update_one({"team": team_num}, {"$set": {"metrics.{}".format(competition): data}}, upsert=True)
 
 def push_team_pit_data(client, competition, variable, data, dbname = "data_processing", colname = "team_pit"):
 	db = client[dbname]
@@ -174,7 +183,7 @@ def load_metric(client, competition, match, group_name, metrics):
 
 		else:
 
-			metrics = db_data["metrics"]
+			metrics = db_data
 
 			gl2 = metrics["gl2"]
 
