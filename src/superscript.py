@@ -250,11 +250,11 @@ def main(logger, verbose, profile, debug, config_path):
 			close_all()
 			return 1
 
-def start(verbose, profile, debug, config_path):
+def start(verbose, profile, debug, config_path, log_path):
+
+	logger = Logger(verbose, profile, debug, file = log_path)
 
 	if profile:
-
-		logger = Logger(verbose, profile, debug)
 
 		import cProfile, pstats, io
 		profile = cProfile.Profile()
@@ -268,14 +268,10 @@ def start(verbose, profile, debug, config_path):
 
 	elif verbose:
 
-		logger = Logger(verbose, profile, debug)
-
 		exit_code = main(logger, verbose, profile, debug, config_path)
 		sys.exit(exit_code)
 
 	elif debug:
-
-		logger = Logger(verbose, profile, debug)
 
 		exit_code = main(logger, verbose, profile, debug, config_path)
 		sys.exit(exit_code)
@@ -289,7 +285,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description = "TRA data processing application.")
 	parser.add_argument("mode", metavar = "MODE", type = str, nargs = 1, choices = ["verbose", "profile", "debug"], help = "verbose, debug, profile")
 	parser.add_argument("--config", dest = "config", default = "config.json", type = str, help = "path to config file")
-	parser.add_argument("--logfile", dest = "logfile", default = "logfile", type = str, help = "path to log file")
+	parser.add_argument("--logfile", dest = "logfile", default = "logfile.log", type = str, help = "path to log file")
 
 	args = parser.parse_args()
 
@@ -297,10 +293,10 @@ if __name__ == "__main__":
 	config_path = args.config
 	log_path = args.logfile
 	if mode == "verbose":
-		start(True, False, False, config_path = config_path)
+		start(True, False, False, config_path = config_path, log_path = log_path)
 	elif mode == "profile":
-		start(False, True, False, config_path = config_path)
+		start(False, True, False, config_path = config_path, log_path = log_path)
 	elif mode == "debug":
-		start(False, False, True, config_path = config_path)
+		start(False, False, True, config_path = config_path, log_path = log_path)
 	
 	exit(0)

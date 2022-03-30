@@ -23,7 +23,7 @@ class Logger(L):
 
 		self.file = file
 
-		if file != None:
+		if file is not None:
 			self.targets.append(self._send_file)
 
 		if profile:

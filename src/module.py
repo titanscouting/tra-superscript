@@ -2,6 +2,7 @@ import abc
 import signal
 import numpy as np
 from tra_analysis import Analysis as an
+from tqdm import tqdm
 
 class Module(metaclass = abc.ABCMeta):
 
@@ -87,7 +88,7 @@ class Match (Module):
 
 		input_vector = []
 
-		for team in data:
+		for team in tqdm(data, desc = "Match Module ", unit = " team"):
 
 			for variable in data[team]:
 
@@ -174,7 +175,7 @@ class Metric (Module):
 		red = {}
 		blu = {}
 
-		for match in matches:
+		for match in tqdm(matches, desc = "Metric Module ", unit = " match"):
 
 			red = self.client.load_metric(match, "red", self.config["tests"])
 			blu = self.client.load_metric(match, "blue", self.config["tests"])
@@ -290,7 +291,7 @@ class Pit (Module):
 	def _process_data(self):
 		tests = self.config["tests"]
 		return_vector = {}
-		for team in self.data:
+		for team in tqdm(self.data, desc = "Pit Module ", unit = " team"):
 			for variable in self.data[team]:
 				if variable in tests:
 					if not variable in return_vector:
