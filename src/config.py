@@ -198,9 +198,9 @@ class Configuration:
 			"competition": self.config["variable"]["competition"],
 			"modules": self.config["variable"]["modules"]
 		}
-		if name in attr_lookup.keys():
+		try:
 			return attr_lookup[name]
-		else:
+		except KeyError:
 			return None
 
 	def __getitem__(self, key):
