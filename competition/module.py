@@ -170,17 +170,19 @@ class Metric (Module):
 		self._push_results()
 
 	def _load_data(self):
-		self.data = d.pull_new_tba_matches(self.tbakey, self.competition, self.timestamp)
+		self.last_match = d.get_analysis_flags(self.apikey, 'metrics_last_match')['metrics_last_match']
+		print("Previous last match", self.last_match)
+		self.data = d.pull_new_tba_matches(self.tbakey, self.competition, self.last_match)
 
 	def _process_data(self):
 
 		self.results = {}
-
+		self.match = 0
 		matches = self.data
-
 		red = {}
 		blu = {}
 		for match in tqdm(matches, desc="Metrics"): # grab matches and loop through each one
+			self.match = max(self.match, int(match['match']))
 			red = d.load_metric(self.apikey, self.competition, match, "red", self.config["tests"]) # get the current ratings for red
 			blu = d.load_metric(self.apikey, self.competition, match, "blue", self.config["tests"]) # get the current ratings for blue
 
@@ -248,7 +250,8 @@ class Metric (Module):
 			self.results[match['match']] = temp_vector
 
 			d.push_metric(self.apikey, self.competition, temp_vector) # push new scores to db
-
+		print("New last match", self.match)
+		d.set_analysis_flags(self.apikey, 'metrics_last_match', {'metrics_last_match': self.match})
 	def _push_results(self):
 		pass
 

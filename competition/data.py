@@ -4,13 +4,13 @@ import pull
 import pandas as pd
 import json
 
-def pull_new_tba_matches(apikey, competition, cutoff):
+def pull_new_tba_matches(apikey, competition, last_match):
 	api_key= apikey
 	x=requests.get("https://www.thebluealliance.com/api/v3/event/"+competition+"/matches/simple", headers={"X-TBA-Auth-Key":api_key})
 	json = x.json()
 	out = []
 	for i in json:
-		if i["actual_time"] != None and i["comp_level"] == "qm" and i["actual_time"]-cutoff >= 0:
+		if i["actual_time"] != None and i["comp_level"] == "qm" and i["match_number"] > last_match :
 			out.append({"match" : i['match_number'], "blue" : list(map(lambda x: int(x[3:]), i['alliances']['blue']['team_keys'])), "red" : list(map(lambda x: int(x[3:]), i['alliances']['red']['team_keys'])), "winner": i["winning_alliance"]})
 	out.sort(key=lambda x: x['match'])
 	return out

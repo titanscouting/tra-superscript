@@ -1,0 +1,170 @@
+2022/04/08 13:39:18 | : #--------------------------------------#
+2022/04/08 13:39:18 | : | superscript version: 1.0.0           |
+2022/04/08 13:39:18 | : | os: Linux                            |
+2022/04/08 13:39:18 | : | python: 3.9.7                        |
+2022/04/08 13:39:18 | : #--------------------------------------#
+2022/04/08 13:39:18 | [INFO]    : current time: 1649443158.5109549
+2022/04/08 13:39:18 | [INFO]    : found and loaded config at <config.json>
+2022/04/08 13:39:18 | [INFO]    : found and loaded database and tba keys
+2022/04/08 13:39:18 | [INFO]    : established connection to database
+2022/04/08 13:39:19 | [INFO]    : analysis backtimed to: 0.0
+2022/04/08 13:39:19 | [INFO]    : config-preference set to local/client, loading local config information
+2022/04/08 13:39:25 | [INFO]    : match module finished in 6.360178709030151 seconds
+Metrics:   0%|          | 0/25 [00:00<?, ?it/s]Metrics:   4%|▍         | 1/25 [00:00<00:09,  2.56it/s]Metrics:   8%|▊         | 2/25 [00:00<00:08,  2.57it/s]Metrics:  12%|█▏        | 3/25 [00:01<00:08,  2.47it/s]Metrics:  16%|█▌        | 4/25 [00:01<00:08,  2.52it/s]Metrics:  20%|██        | 5/25 [00:01<00:07,  2.54it/s]Metrics:  24%|██▍       | 6/25 [00:02<00:07,  2.55it/s]Metrics:  28%|██▊       | 7/25 [00:02<00:07,  2.55it/s]Metrics:  32%|███▏      | 8/25 [00:03<00:06,  2.56it/s]Metrics:  36%|███▌      | 9/25 [00:03<00:06,  2.40it/s]Metrics:  40%|████      | 10/25 [00:04<00:06,  2.46it/s]Metrics:  44%|████▍     | 11/25 [00:04<00:06,  2.10it/s]Metrics:  48%|████▊     | 12/25 [00:05<00:06,  2.03it/s]Metrics:  52%|█████▏    | 13/25 [00:05<00:05,  2.14it/s]Metrics:  56%|█████▌    | 14/25 [00:05<00:04,  2.24it/s]Metrics:  60%|██████    | 15/25 [00:06<00:04,  2.30it/s]Metrics:  64%|██████▍   | 16/25 [00:06<00:03,  2.39it/s]Metrics:  68%|██████▊   | 17/25 [00:07<00:03,  2.33it/s]Metrics:  72%|███████▏  | 18/25 [00:07<00:02,  2.40it/s]Metrics:  76%|███████▌  | 19/25 [00:07<00:02,  2.45it/s]Metrics:  80%|████████  | 20/25 [00:08<00:02,  2.49it/s]Metrics:  84%|████████▍ | 21/25 [00:08<00:01,  2.37it/s]Metrics:  88%|████████▊ | 22/25 [00:09<00:01,  2.44it/s]Metrics:  92%|█████████▏| 23/25 [00:09<00:00,  2.48it/s]Metrics:  96%|█████████▌| 24/25 [00:10<00:00,  2.41it/s]Metrics: 100%|██████████| 25/25 [00:10<00:00,  2.45it/s]Metrics: 100%|██████████| 25/25 [00:10<00:00,  2.39it/s]
+2022/04/08 13:39:35 | [INFO]    : metric module finished in 10.557814836502075 seconds
+2022/04/08 13:39:37 | [INFO]    : pit module finished in 1.741246223449707 seconds
+2022/04/08 13:39:37 | [INFO]    : closed threads and database client
+2022/04/08 13:39:37 | [INFO]    : finished all tasks in 19.249614477157593 seconds, looping
+2022/04/08 13:39:37 | [INFO]    : loop delayed by 280.75034403800964 seconds
+2022/04/08 13:44:18 | [INFO]    : current time: 1649443458.6113253
+2022/04/08 13:44:18 | [INFO]    : found and loaded config at <config.json>
+2022/04/08 13:44:18 | [INFO]    : found and loaded database and tba keys
+2022/04/08 13:44:18 | [INFO]    : established connection to database
+2022/04/08 13:44:19 | [INFO]    : analysis backtimed to: 1649443158.5109549
+2022/04/08 13:44:19 | [INFO]    : config-preference set to local/client, loading local config information
+2022/04/08 13:44:26 | [INFO]    : match module finished in 6.962671756744385 seconds
+Metrics: 0it [00:00, ?it/s]Metrics: 0it [00:00, ?it/s]
+2022/04/08 13:44:26 | [INFO]    : metric module finished in 0.18820714950561523 seconds
+2022/04/08 13:44:28 | [INFO]    : pit module finished in 1.7953612804412842 seconds
+2022/04/08 13:44:28 | [INFO]    : closed threads and database client
+2022/04/08 13:44:28 | [INFO]    : finished all tasks in 9.482671737670898 seconds, looping
+2022/04/08 13:44:28 | [INFO]    : loop delayed by 290.5172882080078 seconds
+2022/04/08 13:49:18 | [INFO]    : current time: 1649443758.7116833
+2022/04/08 13:49:18 | [INFO]    : found and loaded config at <config.json>
+2022/04/08 13:49:18 | [INFO]    : found and loaded database and tba keys
+2022/04/08 13:49:18 | [INFO]    : established connection to database
+2022/04/08 13:49:19 | [INFO]    : analysis backtimed to: 1649443458.6113253
+2022/04/08 13:49:19 | [INFO]    : config-preference set to local/client, loading local config information
+2022/04/08 13:49:26 | [INFO]    : match module finished in 7.532702207565308 seconds
+Metrics: 0it [00:00, ?it/s]Metrics: 0it [00:00, ?it/s]
+2022/04/08 13:49:26 | [INFO]    : metric module finished in 0.06511259078979492 seconds
+2022/04/08 13:49:28 | [INFO]    : pit module finished in 1.819601058959961 seconds
+2022/04/08 13:49:28 | [INFO]    : closed threads and database client
+2022/04/08 13:49:28 | [INFO]    : finished all tasks in 9.962053775787354 seconds, looping
+2022/04/08 13:49:28 | [INFO]    : loop delayed by 290.03790378570557 seconds
+2022/04/08 13:54:18 | [INFO]    : current time: 1649444058.811996
+2022/04/08 13:54:18 | [INFO]    : found and loaded config at <config.json>
+2022/04/08 13:54:18 | [INFO]    : found and loaded database and tba keys
+2022/04/08 13:54:18 | [INFO]    : established connection to database
+2022/04/08 13:54:19 | [INFO]    : analysis backtimed to: 1649443758.7116833
+2022/04/08 13:54:19 | [INFO]    : config-preference set to local/client, loading local config information
+2022/04/08 13:54:26 | [INFO]    : match module finished in 7.571904420852661 seconds
+Metrics: 0it [00:00, ?it/s]Metrics: 0it [00:00, ?it/s]
+2022/04/08 13:54:26 | [INFO]    : metric module finished in 0.15475034713745117 seconds
+2022/04/08 13:54:28 | [INFO]    : pit module finished in 1.6621544361114502 seconds
+2022/04/08 13:54:28 | [INFO]    : closed threads and database client
+2022/04/08 13:54:28 | [INFO]    : finished all tasks in 9.827200174331665 seconds, looping
+2022/04/08 13:54:28 | [INFO]    : loop delayed by 290.17272448539734 seconds
+2022/04/08 13:59:18 | [INFO]    : current time: 1649444358.912293
+2022/04/08 13:59:18 | [INFO]    : found and loaded config at <config.json>
+2022/04/08 13:59:18 | [INFO]    : found and loaded database and tba keys
+2022/04/08 13:59:19 | [INFO]    : established connection to database
+2022/04/08 13:59:19 | [INFO]    : analysis backtimed to: 1649444058.811996
+2022/04/08 13:59:19 | [INFO]    : config-preference set to local/client, loading local config information
+2022/04/08 13:59:30 | [INFO]    : match module finished in 10.847434997558594 seconds
+Metrics: 0it [00:00, ?it/s]Metrics: 0it [00:00, ?it/s]
+2022/04/08 13:59:30 | [INFO]    : metric module finished in 0.10496973991394043 seconds
+2022/04/08 13:59:32 | [INFO]    : pit module finished in 1.7203879356384277 seconds
+2022/04/08 13:59:32 | [INFO]    : closed threads and database client
+2022/04/08 13:59:32 | [INFO]    : finished all tasks in 13.211304664611816 seconds, looping
+2022/04/08 13:59:32 | [INFO]    : loop delayed by 286.7886555194855 seconds
+2022/04/08 14:04:19 | [INFO]    : current time: 1649444659.012761
+2022/04/08 14:04:19 | [INFO]    : found and loaded config at <config.json>
+2022/04/08 14:04:19 | [INFO]    : found and loaded database and tba keys
+2022/04/08 14:04:19 | [INFO]    : established connection to database
+2022/04/08 14:04:19 | [INFO]    : analysis backtimed to: 1649444358.912293
+2022/04/08 14:04:19 | [INFO]    : config-preference set to local/client, loading local config information
+2022/04/08 14:04:28 | [INFO]    : match module finished in 9.347296714782715 seconds
+Metrics: 0it [00:00, ?it/s]Metrics: 0it [00:00, ?it/s]
+2022/04/08 14:04:28 | [INFO]    : metric module finished in 0.10346341133117676 seconds
+2022/04/08 14:04:31 | [INFO]    : pit module finished in 2.109464168548584 seconds
+2022/04/08 14:04:31 | [INFO]    : closed threads and database client
+2022/04/08 14:04:31 | [INFO]    : finished all tasks in 12.072788000106812 seconds, looping
+2022/04/08 14:04:31 | [INFO]    : loop delayed by 287.92717266082764 seconds
+2022/04/08 14:09:19 | [INFO]    : current time: 1649444959.0845735
+2022/04/08 14:09:19 | [INFO]    : found and loaded config at <config.json>
+2022/04/08 14:09:19 | [INFO]    : found and loaded database and tba keys
+2022/04/08 14:09:19 | [INFO]    : established connection to database
+2022/04/08 14:09:19 | [INFO]    : analysis backtimed to: 1649444659.012761
+2022/04/08 14:09:19 | [INFO]    : config-preference set to local/client, loading local config information
+2022/04/08 14:09:30 | [INFO]    : match module finished in 10.792919158935547 seconds
+Metrics: 0it [00:00, ?it/s]Metrics: 0it [00:00, ?it/s]
+2022/04/08 14:09:30 | [INFO]    : metric module finished in 0.08684110641479492 seconds
+2022/04/08 14:09:32 | [INFO]    : pit module finished in 1.9306814670562744 seconds
+2022/04/08 14:09:32 | [INFO]    : closed threads and database client
+2022/04/08 14:09:32 | [INFO]    : finished all tasks in 13.267388105392456 seconds, looping
+2022/04/08 14:09:32 | [INFO]    : loop delayed by 286.73254227638245 seconds
+2022/04/08 14:14:19 | [INFO]    : current time: 1649445259.0884073
+2022/04/08 14:14:19 | [INFO]    : found and loaded config at <config.json>
+2022/04/08 14:14:19 | [INFO]    : found and loaded database and tba keys
+2022/04/08 14:14:19 | [INFO]    : established connection to database
+2022/04/08 14:14:19 | [INFO]    : analysis backtimed to: 1649444959.0845735
+2022/04/08 14:14:19 | [INFO]    : config-preference set to local/client, loading local config information
+2022/04/08 14:14:29 | [INFO]    : match module finished in 9.690043449401855 seconds
+Metrics: 0it [00:00, ?it/s]Metrics: 0it [00:00, ?it/s]
+2022/04/08 14:14:29 | [INFO]    : metric module finished in 0.1428515911102295 seconds
+2022/04/08 14:14:31 | [INFO]    : pit module finished in 1.9340870380401611 seconds
+2022/04/08 14:14:31 | [INFO]    : closed threads and database client
+2022/04/08 14:14:31 | [INFO]    : finished all tasks in 12.373121976852417 seconds, looping
+2022/04/08 14:14:31 | [INFO]    : loop delayed by 287.6267948150635 seconds
+2022/04/08 14:19:19 | [INFO]    : current time: 1649445559.188727
+2022/04/08 14:19:19 | [INFO]    : found and loaded config at <config.json>
+2022/04/08 14:19:19 | [INFO]    : found and loaded database and tba keys
+2022/04/08 14:19:19 | [INFO]    : established connection to database
+2022/04/08 14:19:19 | [INFO]    : analysis backtimed to: 1649445259.0884073
+2022/04/08 14:19:19 | [INFO]    : config-preference set to local/client, loading local config information
+2022/04/08 14:19:30 | [INFO]    : match module finished in 10.267187118530273 seconds
+Metrics: 0it [00:00, ?it/s]Metrics: 0it [00:00, ?it/s]
+2022/04/08 14:19:30 | [INFO]    : metric module finished in 0.5178976058959961 seconds
+2022/04/08 14:19:32 | [INFO]    : pit module finished in 1.655653476715088 seconds
+2022/04/08 14:19:32 | [INFO]    : closed threads and database client
+2022/04/08 14:19:32 | [INFO]    : finished all tasks in 13.050731897354126 seconds, looping
+2022/04/08 14:19:32 | [INFO]    : loop delayed by 286.9491786956787 seconds
+2022/04/08 14:24:19 | [INFO]    : current time: 1649445859.2890737
+2022/04/08 14:24:19 | [INFO]    : found and loaded config at <config.json>
+2022/04/08 14:24:19 | [INFO]    : found and loaded database and tba keys
+2022/04/08 14:24:19 | [INFO]    : established connection to database
+2022/04/08 14:24:19 | [INFO]    : analysis backtimed to: 1649445559.188727
+2022/04/08 14:24:19 | [INFO]    : config-preference set to local/client, loading local config information
+2022/04/08 14:24:30 | [INFO]    : match module finished in 11.110676765441895 seconds
+Metrics: 0it [00:00, ?it/s]Metrics: 0it [00:00, ?it/s]
+2022/04/08 14:24:31 | [INFO]    : metric module finished in 0.09472298622131348 seconds
+2022/04/08 14:24:32 | [INFO]    : pit module finished in 1.9062983989715576 seconds
+2022/04/08 14:24:33 | [INFO]    : closed threads and database client
+2022/04/08 14:24:33 | [INFO]    : finished all tasks in 13.732285976409912 seconds, looping
+2022/04/08 14:24:33 | [INFO]    : loop delayed by 286.2676737308502 seconds
+2022/04/08 14:29:19 | [INFO]    : current time: 1649446159.3893542
+2022/04/08 14:29:19 | [INFO]    : found and loaded config at <config.json>
+2022/04/08 14:29:19 | [INFO]    : found and loaded database and tba keys
+2022/04/08 14:29:19 | [INFO]    : established connection to database
+2022/04/08 14:29:19 | [INFO]    : analysis backtimed to: 1649445859.2890737
+2022/04/08 14:29:19 | [INFO]    : config-preference set to local/client, loading local config information
+2022/04/08 14:29:31 | [INFO]    : match module finished in 11.64138388633728 seconds
+Metrics: 0it [00:00, ?it/s]Metrics: 0it [00:00, ?it/s]
+2022/04/08 14:29:31 | [INFO]    : metric module finished in 0.08331465721130371 seconds
+2022/04/08 14:29:33 | [INFO]    : pit module finished in 1.7486073970794678 seconds
+2022/04/08 14:29:33 | [INFO]    : closed threads and database client
+2022/04/08 14:29:33 | [INFO]    : finished all tasks in 14.08924150466919 seconds, looping
+2022/04/08 14:29:33 | [INFO]    : loop delayed by 285.9107177257538 seconds
+2022/04/08 14:34:19 | [INFO]    : current time: 1649446459.4896593
+2022/04/08 14:34:19 | [INFO]    : found and loaded config at <config.json>
+2022/04/08 14:34:19 | [INFO]    : found and loaded database and tba keys
+2022/04/08 14:34:19 | [INFO]    : established connection to database
+2022/04/08 14:34:20 | [INFO]    : analysis backtimed to: 1649446159.3893542
+2022/04/08 14:34:20 | [INFO]    : config-preference set to local/client, loading local config information
+2022/04/08 14:34:34 | [INFO]    : match module finished in 14.8920156955719 seconds
+Metrics: 0it [00:00, ?it/s]Metrics: 0it [00:00, ?it/s]
+2022/04/08 14:34:35 | [INFO]    : metric module finished in 0.11336660385131836 seconds
+2022/04/08 14:34:36 | [INFO]    : pit module finished in 1.7640228271484375 seconds
+2022/04/08 14:34:36 | [INFO]    : closed threads and database client
+2022/04/08 14:34:36 | [INFO]    : finished all tasks in 17.381346464157104 seconds, looping
+2022/04/08 14:34:36 | [INFO]    : loop delayed by 282.6186122894287 seconds
+2022/04/08 14:39:19 | [INFO]    : current time: 1649446759.5899608
+2022/04/08 14:39:19 | [INFO]    : found and loaded config at <config.json>
+2022/04/08 14:39:19 | [INFO]    : found and loaded database and tba keys
+2022/04/08 14:39:19 | [INFO]    : established connection to database
+2022/04/08 14:39:20 | [INFO]    : analysis backtimed to: 1649446459.4896593
+2022/04/08 14:39:20 | [INFO]    : config-preference set to local/client, loading local config information
+2022/04/08 14:39:32 | [INFO]    : match module finished in 12.305787801742554 seconds
+Metrics: 0it [00:00, ?it/s]Metrics: 0it [00:00, ?it/s]
+slurmstepd-cpu-dl580-0: error: *** JOB 242 ON cpu-dl580-0 CANCELLED AT 2022-04-08T14:41:13 ***
