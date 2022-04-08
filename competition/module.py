@@ -177,7 +177,7 @@ class Metric (Module):
 	def _process_data(self):
 
 		self.results = {}
-		self.match = 0
+		self.match = self.last_match
 		matches = self.data
 		red = {}
 		blu = {}

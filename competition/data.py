@@ -118,12 +118,12 @@ def push_team_pit_data(client, competition, variable, data, dbname = "data_proce
 def get_analysis_flags(client, flag):
 	db = client.data_processing
 	mdata = db.flags
-	return mdata.find_one({flag:{"$exists":True}})
+	return mdata.find_one({"_id": "2022"})
 
 def set_analysis_flags(client, flag, data):
 	db = client.data_processing
 	mdata = db.flags
-	return mdata.replace_one({flag:{"$exists":True}}, data, True)
+	return mdata.update_one({"_id": "2022"}, {"$set": data})
 
 def unkeyify_2l(layered_dict):
 	out = {}
