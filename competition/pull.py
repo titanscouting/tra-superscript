@@ -2,7 +2,7 @@ import requests
 from exceptions import APIError
 from dep import load_config
 
-url = "https://titanscouting.epochml.org"
+url = "https://scouting.titanrobotics2022.com"
 config_tra = {}
 load_config("config.json", config_tra)
 trakey = config_tra['persistent']['key']['tra']
