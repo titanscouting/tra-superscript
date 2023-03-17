@@ -12,3 +12,13 @@
 **/errorlog.txt
 /dist/superscript.*
 /dist/superscript
+**/*.pid
+
+**/profile.*
+
+**/*.log
+**/errorlog.txt
+/dist/*
+
+slurm-tra-superscript.out
+config*.json

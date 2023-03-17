@@ -1,0 +1,15 @@
+cerberus
+dnspython
+numpy
+pandas
+pyinstaller
+pylint
+pymongo
+pyparsing
+python-daemon
+pyzmq
+requests
+scikit-learn
+scipy
+six
+tra-analysis
